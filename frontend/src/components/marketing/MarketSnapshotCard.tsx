@@ -1,6 +1,6 @@
 import { AssetRole, BadgeTone, SurfaceElevation, ValueFormat } from "@/lib/enums";
 import { formatValue } from "@/lib/format";
-import { availableLiquidity, marketAssets, marketMetrics } from "@/content/landing";
+import { availableLiquidity, marketAssets, marketMetrics } from "@/content/protocol";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 

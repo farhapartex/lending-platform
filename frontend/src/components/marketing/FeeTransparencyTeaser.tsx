@@ -1,5 +1,5 @@
 import { AppRoute, ButtonVariant, IconName, SectionId, SectionTone } from "@/lib/enums";
-import { feeItems } from "@/content/landing";
+import { feeItems } from "@/content/protocol";
 import { Button } from "@/components/ui/Button";
 import { Section } from "@/components/ui/Section";
 import { SectionHeading } from "@/components/ui/SectionHeading";

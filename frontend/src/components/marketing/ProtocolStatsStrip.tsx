@@ -1,5 +1,5 @@
 import { DataStatus, SectionId, SectionSpacing, SectionTone } from "@/lib/enums";
-import { protocolStats, protocolStatsStatus } from "@/content/landing";
+import { protocolStats, protocolStatsStatus } from "@/content/protocol";
 import { Section } from "@/components/ui/Section";
 import { StatTile, StatTileSkeleton } from "@/components/ui/StatTile";
 

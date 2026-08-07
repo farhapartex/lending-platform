@@ -1,41 +1,4 @@
-import {
-  AssetRole,
-  AssetSymbol,
-  DataStatus,
-  FeeKind,
-  HowItWorksStepKey,
-  IconName,
-  MarketMetricKey,
-  ProtocolStatKey,
-  TrendDirection,
-  TrustSignalKey,
-  TrustSignalStatus,
-  ValueFormat,
-  ValuePropKey,
-} from "@/lib/enums";
-
-export type ProtocolStat = {
-  key: ProtocolStatKey;
-  label: string;
-  value: number;
-  format: ValueFormat;
-  trend: TrendDirection;
-  trendLabel: string;
-};
-
-export type MarketMetric = {
-  key: MarketMetricKey;
-  label: string;
-  value: number;
-  format: ValueFormat;
-  hint: string;
-};
-
-export type MarketAsset = {
-  symbol: AssetSymbol;
-  role: AssetRole;
-  name: string;
-};
+import { HowItWorksStepKey, IconName, TrustSignalKey, TrustSignalStatus, ValuePropKey } from "@/lib/enums";
 
 export type ValueProp = {
   key: ValuePropKey;
@@ -59,13 +22,6 @@ export type TrustSignal = {
   status: TrustSignalStatus;
 };
 
-export type FeeItem = {
-  kind: FeeKind;
-  label: string;
-  value: string;
-  description: string;
-};
-
 export const heroContent = {
   eyebrow: "Phase 1 · WETH / USDC market",
   title: "Put your crypto to work, or borrow against it without selling.",
@@ -75,73 +31,6 @@ export const heroContent = {
   secondaryCta: "Borrow against collateral",
   custodyNote: "Non-custodial. No account and no password — connect a wallet and you are ready.",
 } as const;
-
-export const protocolStatsStatus: DataStatus = DataStatus.Ready;
-
-export const protocolStats: ProtocolStat[] = [
-  {
-    key: ProtocolStatKey.TotalDeposited,
-    label: "Total deposited",
-    value: 48_240_000,
-    format: ValueFormat.UsdCompact,
-    trend: TrendDirection.Up,
-    trendLabel: "+4.1% this week",
-  },
-  {
-    key: ProtocolStatKey.TotalBorrowed,
-    label: "Total borrowed",
-    value: 31_580_000,
-    format: ValueFormat.UsdCompact,
-    trend: TrendDirection.Up,
-    trendLabel: "+2.7% this week",
-  },
-  {
-    key: ProtocolStatKey.Utilization,
-    label: "Pool utilization",
-    value: 0.6546,
-    format: ValueFormat.Percent,
-    trend: TrendDirection.Flat,
-    trendLabel: "Below the rate kink",
-  },
-];
-
-export const marketAssets: MarketAsset[] = [
-  { symbol: AssetSymbol.Weth, role: AssetRole.Collateral, name: "Wrapped Ether" },
-  { symbol: AssetSymbol.Usdc, role: AssetRole.Borrowable, name: "USD Coin" },
-];
-
-export const marketMetrics: MarketMetric[] = [
-  {
-    key: MarketMetricKey.SupplyApy,
-    label: "Supply APY",
-    value: 0.0482,
-    format: ValueFormat.Percent,
-    hint: "Earned by lenders, paid by borrowers",
-  },
-  {
-    key: MarketMetricKey.BorrowApr,
-    label: "Borrow APR",
-    value: 0.0635,
-    format: ValueFormat.Percent,
-    hint: "Rises as the pool gets more utilized",
-  },
-  {
-    key: MarketMetricKey.MaxLtv,
-    label: "Max borrow",
-    value: 0.75,
-    format: ValueFormat.Percent,
-    hint: "Of your collateral value",
-  },
-  {
-    key: MarketMetricKey.LiquidationThreshold,
-    label: "Liquidation at",
-    value: 0.8,
-    format: ValueFormat.Percent,
-    hint: "Deliberate buffer above max borrow",
-  },
-];
-
-export const availableLiquidity = 16_660_000;
 
 export const valueProps: ValueProp[] = [
   {
@@ -219,27 +108,6 @@ export const trustSignals: TrustSignal[] = [
     title: "Independent audit",
     description: "Scheduled ahead of mainnet launch. The full report will be published here when complete.",
     status: TrustSignalStatus.Planned,
-  },
-];
-
-export const feeItems: FeeItem[] = [
-  {
-    kind: FeeKind.InterestSpread,
-    label: "Interest spread",
-    value: "10% of interest paid",
-    description: "The only ongoing fee. Taken from borrower interest, never from your deposited principal.",
-  },
-  {
-    kind: FeeKind.LiquidationBonus,
-    label: "Liquidation bonus",
-    value: "5% of debt repaid",
-    description: "Paid to whoever resolves an unsafe position. Applies only if your position reaches the threshold.",
-  },
-  {
-    kind: FeeKind.PlatformFee,
-    label: "Deposit & withdrawal fees",
-    value: "None",
-    description: "No fee to deposit, withdraw, borrow, or repay. You pay only network gas.",
   },
 ];
 

@@ -1,4 +1,4 @@
-import { AppRoute, FooterGroupKey, NavLinkKey, NavLinkKind, SectionId } from "@/lib/enums";
+import { AppNavLinkKey, AppRoute, FooterGroupKey, NavLinkKey, NavLinkKind, SectionId } from "@/lib/enums";
 
 export type NavLink = {
   key: NavLinkKey;
@@ -32,6 +32,21 @@ export const marketingNavLinks: NavLink[] = [
     kind: NavLinkKind.Route,
     href: AppRoute.Learn,
   },
+];
+
+export type AppNavLink = {
+  key: AppNavLinkKey;
+  label: string;
+  href: AppRoute;
+};
+
+export const appNavLinks: AppNavLink[] = [
+  { key: AppNavLinkKey.Markets, label: "Markets", href: AppRoute.Markets },
+  { key: AppNavLinkKey.Lend, label: "Lend", href: AppRoute.Lend },
+  { key: AppNavLinkKey.Borrow, label: "Borrow", href: AppRoute.Borrow },
+  { key: AppNavLinkKey.Dashboard, label: "Dashboard", href: AppRoute.Dashboard },
+  { key: AppNavLinkKey.Liquidations, label: "Liquidations", href: AppRoute.Liquidations },
+  { key: AppNavLinkKey.Learn, label: "Learn", href: AppRoute.Learn },
 ];
 
 export type FooterLink = {

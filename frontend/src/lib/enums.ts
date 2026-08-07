@@ -26,6 +26,10 @@ export enum SectionId {
   Trust = "trust",
   Practice = "practice",
   MainContent = "main-content",
+  ProtocolTotals = "protocol-totals",
+  MarketSummary = "market-summary",
+  MarketRates = "market-rates",
+  MarketFees = "market-fees",
 }
 
 export enum ButtonVariant {
@@ -87,7 +91,39 @@ export enum DataStatus {
 export enum ValueFormat {
   UsdCompact = "usdCompact",
   Usd = "usd",
+  UsdPrice = "usdPrice",
   Percent = "percent",
+}
+
+export enum OracleStatus {
+  Fresh = "fresh",
+  Stale = "stale",
+  Unavailable = "unavailable",
+}
+
+export enum NetworkKind {
+  Mainnet = "mainnet",
+  Testnet = "testnet",
+}
+
+export enum UtilizationZone {
+  BelowKink = "belowKink",
+  AboveKink = "aboveKink",
+}
+
+export enum RateExplainerPointKey {
+  Demand = "demand",
+  Kink = "kink",
+  Withdrawals = "withdrawals",
+}
+
+export enum AppNavLinkKey {
+  Markets = "markets",
+  Lend = "lend",
+  Borrow = "borrow",
+  Dashboard = "dashboard",
+  Liquidations = "liquidations",
+  Learn = "learn",
 }
 
 export enum ProtocolStatKey {
@@ -101,6 +137,7 @@ export enum MarketMetricKey {
   BorrowApr = "borrowApr",
   MaxLtv = "maxLtv",
   LiquidationThreshold = "liquidationThreshold",
+  AvailableLiquidity = "availableLiquidity",
 }
 
 export enum AssetSymbol {
