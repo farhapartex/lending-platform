@@ -30,6 +30,46 @@ export enum SectionId {
   MarketSummary = "market-summary",
   MarketRates = "market-rates",
   MarketFees = "market-fees",
+  LendPosition = "your-position",
+  LendAction = "deposit-and-withdraw",
+  LendMarket = "market-conditions",
+}
+
+export enum LendTab {
+  Deposit = "deposit",
+  Withdraw = "withdraw",
+}
+
+export enum WalletStatus {
+  Disconnected = "disconnected",
+  Connecting = "connecting",
+  Connected = "connected",
+  WrongNetwork = "wrongNetwork",
+}
+
+export enum TxFlowStatus {
+  Idle = "idle",
+  AwaitingApproval = "awaitingApproval",
+  AwaitingSignature = "awaitingSignature",
+  Pending = "pending",
+  Confirmed = "confirmed",
+  Reverted = "reverted",
+}
+
+export enum StepState {
+  Upcoming = "upcoming",
+  Active = "active",
+  Done = "done",
+}
+
+export enum AmountValidationCode {
+  None = "none",
+  Empty = "empty",
+  InvalidAmount = "invalidAmount",
+  BelowMinimum = "belowMinimum",
+  ExceedsWalletBalance = "exceedsWalletBalance",
+  ExceedsDeposit = "exceedsDeposit",
+  ExceedsAvailableLiquidity = "exceedsAvailableLiquidity",
 }
 
 export enum ButtonVariant {
@@ -217,4 +257,7 @@ export enum IconName {
   Close = "close",
   ExternalLink = "externalLink",
   Receipt = "receipt",
+  Info = "info",
+  Warning = "warning",
+  Loader = "loader",
 }

@@ -110,6 +110,32 @@ const glyphs: Record<IconName, ReactNode> = {
       <path d="M9.5 12.5h5" />
     </>
   ),
+  [IconName.Info]: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 11v5.5" />
+      <path d="M12 7.75h.01" />
+    </>
+  ),
+  [IconName.Warning]: (
+    <>
+      <path d="M12 4.5l8.5 15H3.5z" />
+      <path d="M12 10v4" />
+      <path d="M12 16.75h.01" />
+    </>
+  ),
+  [IconName.Loader]: (
+    <>
+      <path d="M12 3.5v3.5" />
+      <path d="M12 17v3.5" />
+      <path d="M3.5 12H7" />
+      <path d="M17 12h3.5" />
+      <path d="M6.2 6.2l2.4 2.4" />
+      <path d="M15.4 15.4l2.4 2.4" />
+      <path d="M6.2 17.8l2.4-2.4" />
+      <path d="M15.4 8.6l2.4-2.4" />
+    </>
+  ),
 };
 
 type IconProps = {

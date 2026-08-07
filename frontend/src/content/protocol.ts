@@ -92,18 +92,32 @@ export const marketAssets: MarketAsset[] = [
   { symbol: AssetSymbol.Usdc, role: AssetRole.Borrowable, name: "USD Coin" },
 ];
 
+export const assetDecimals: Record<AssetSymbol, number> = {
+  [AssetSymbol.Weth]: 18,
+  [AssetSymbol.Usdc]: 6,
+};
+
+export const assetPrices: Record<AssetSymbol, number> = {
+  [AssetSymbol.Weth]: 3412.58,
+  [AssetSymbol.Usdc]: 1,
+};
+
+export const supplyApyRate = 0.0482;
+
+export const borrowAprRate = 0.0635;
+
 export const marketMetrics: MarketMetric[] = [
   {
     key: MarketMetricKey.SupplyApy,
     label: "Supply APY",
-    value: 0.0482,
+    value: supplyApyRate,
     format: ValueFormat.Percent,
     hint: "Earned by lenders, paid by borrowers",
   },
   {
     key: MarketMetricKey.BorrowApr,
     label: "Borrow APR",
-    value: 0.0635,
+    value: borrowAprRate,
     format: ValueFormat.Percent,
     hint: "Rises as the pool gets more utilized",
   },
