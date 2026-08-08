@@ -125,6 +125,12 @@ const glyphs: Record<IconName, ReactNode> = {
     </>
   ),
   [IconName.ChevronDown]: <path d="M6 9.5l6 6 6-6" />,
+  [IconName.Sparkles]: (
+    <>
+      <path d="M12 3.5l1.7 4.3 4.3 1.7-4.3 1.7L12 15.5l-1.7-4.3L6 9.5l4.3-1.7z" />
+      <path d="M18 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" />
+    </>
+  ),
   [IconName.Loader]: (
     <>
       <path d="M12 3.5v3.5" />

@@ -2,13 +2,16 @@ import { BadgeTone, IconName, WelcomeStepKey } from "@/lib/enums";
 
 export type WelcomeStep = {
   key: WelcomeStepKey;
+  shortLabel: string;
   eyebrow: string;
   title: string;
+  takeaway: string;
   icon: IconName;
   paragraphs: string[];
   bullets?: string[];
   callout?: {
     tone: BadgeTone;
+    icon: IconName;
     title: string;
     body: string;
   };
@@ -16,101 +19,134 @@ export type WelcomeStep = {
 
 export const welcomeSteps: WelcomeStep[] = [
   {
-    key: WelcomeStepKey.Wallet,
-    eyebrow: "First things first",
-    title: "Your wallet is your account",
-    icon: IconName.Wallet,
+    key: WelcomeStepKey.Overview,
+    shortLabel: "Overview",
+    eyebrow: "Welcome",
+    title: "Two ways to put your crypto to work",
+    takeaway: "Nothing moves until you choose it.",
+    icon: IconName.Sparkles,
     paragraphs: [
-      "There is no signup form here, and no password to choose. A crypto wallet is an app that holds your assets and proves who you are by signing transactions, so connecting it is the whole of signing in.",
-      "This is worth understanding before you deposit anything, because it cuts both ways.",
+      "You can do two things here. Earn interest on crypto you are already holding, or borrow cash against it without having to sell.",
+      "Have a look around as long as you like. Nothing happens automatically, and every page works without connecting anything.",
+    ],
+  },
+  {
+    key: WelcomeStepKey.Wallet,
+    shortLabel: "Your wallet",
+    eyebrow: "Signing in",
+    title: "There is no account to create",
+    takeaway: "You are already set up.",
+    icon: IconName.Lock,
+    paragraphs: [
+      "No form to fill in, no password to invent, and no waiting for approval. Connecting your wallet is the whole of signing in.",
+      "Your assets stay in your own wallet throughout. They move only when you approve a transaction yourself.",
     ],
     bullets: [
-      "Nobody can freeze your funds or block your access, including us.",
-      "Your assets move only when you approve a transaction yourself.",
-      "If you lose your wallet's seed phrase, nobody can recover it for you.",
+      "No email address and no personal details required.",
+      "No minimum balance and no account fees.",
+      "You can disconnect at any moment and nothing changes.",
     ],
     callout: {
-      tone: BadgeTone.Caution,
-      title: "Back up your seed phrase first",
-      body: "It is the only way back into your wallet. Write it down, keep it offline, and never share it with anyone who asks, including anyone claiming to be support.",
+      tone: BadgeTone.Brand,
+      icon: IconName.ShieldCheck,
+      title: "One thing worth setting up properly",
+      body: "Keep your wallet's recovery phrase written down somewhere safe and offline. It is how you get back in on a new device, and it is the one thing nobody can replace for you.",
     },
   },
   {
     key: WelcomeStepKey.Lending,
-    eyebrow: "Concept one of four",
-    title: "Lending: earn on assets sitting idle",
+    shortLabel: "Lending",
+    eyebrow: "Option one",
+    title: "Earn on crypto you are already holding",
+    takeaway: "Withdraw whenever you like.",
     icon: IconName.Coins,
     paragraphs: [
-      "Deposit USDC into the shared pool and borrowers pay you interest to use it. Your balance grows continuously rather than in monthly instalments.",
+      "Deposit USDC and borrowers pay you interest to use it. Your balance grows continuously rather than in monthly instalments.",
     ],
     bullets: [
-      "No lock-up. Withdraw whenever the pool has liquid funds available.",
-      "Interest compounds into your balance automatically, so there is nothing to claim.",
-      "Your rate follows demand. More borrowing means you earn more.",
+      "No lock-up period and no minimum term.",
+      "Interest is added to your balance automatically, so there is nothing to claim.",
+      "Take your money out whenever the pool has funds available.",
     ],
   },
   {
     key: WelcomeStepKey.Borrowing,
-    eyebrow: "Concept two of four",
-    title: "Borrowing: unlock cash without selling",
+    shortLabel: "Borrowing",
+    eyebrow: "Option two",
+    title: "Borrow without selling what you own",
+    takeaway: "Keep your WETH and its upside.",
     icon: IconName.Wallet,
     paragraphs: [
-      "Lock WETH as collateral and borrow USDC against it. You keep your WETH, and its future upside, instead of selling to raise funds.",
+      "Lock WETH as collateral and borrow USDC against it. No credit check, no paperwork, and no fixed repayment date.",
     ],
     bullets: [
-      "You can borrow up to a published share of your collateral's value.",
-      "There is no credit check, no paperwork, and no fixed repayment schedule.",
-      "Repay any amount at any time, and add collateral whenever you want.",
+      "Borrow up to a published share of what your collateral is worth.",
+      "Repay any amount, whenever suits you.",
+      "Add more collateral at any time to give yourself more room.",
     ],
   },
   {
     key: WelcomeStepKey.Health,
-    eyebrow: "Concept three of four",
-    title: "Health score: the number that matters",
+    shortLabel: "Safety score",
+    eyebrow: "Staying informed",
+    title: "One number tells you how you are doing",
+    takeaway: "Above 1.00 means you are fine.",
     icon: IconName.Gauge,
     paragraphs: [
-      "Every loan carries a health score comparing your collateral's value against what you owe. Above 1.00 you are safe. At or below 1.00 your position can be closed by anyone.",
-      "It moves whenever the WETH price moves, so it can change without you doing anything at all.",
+      "Every loan has a safety score comparing your collateral against what you owe. We show it in plain words next to the number, and it updates live as prices move.",
     ],
     bullets: [
-      "The interface shows it live, in plain words, not just a number.",
-      "You are warned well before liquidation becomes possible.",
-      "Adding collateral or repaying part of the loan both push it back up.",
+      "Safe, Caution and At risk are the three states you will see.",
+      "You are warned early, well before anything can happen to your loan.",
+      "There is a preview tool that shows what a price drop would do, before it happens.",
     ],
   },
   {
     key: WelcomeStepKey.Liquidation,
-    eyebrow: "Concept four of four",
-    title: "Liquidation: what happens if it goes wrong",
-    icon: IconName.Warning,
+    shortLabel: "Staying safe",
+    eyebrow: "Good habits",
+    title: "How to stay on the safe side",
+    takeaway: "Borrow less than the maximum and you have room to breathe.",
+    icon: IconName.ShieldCheck,
     paragraphs: [
-      "If your health score reaches 1.00, anyone may repay your loan and take your collateral plus a published bonus. This exists so lenders are never left short by a loan that has gone bad.",
+      "If a loan's safety score ever reaches 1.00, someone else is allowed to repay it and take the collateral. That rule is what protects the people whose money you borrowed.",
+      "Avoiding it is straightforward, and the app is built to help you.",
+    ],
+    bullets: [
+      "Borrow comfortably under your limit rather than right up to it.",
+      "The borrow screen suggests a safer figure than the maximum it permits.",
+      "Topping up collateral or repaying a little takes one transaction.",
     ],
     callout: {
-      tone: BadgeTone.Caution,
-      title: "In this phase the whole position is closed",
-      body: "Liquidation currently repays your entire loan rather than just enough to make it safe, so a brief price dip can end the loan altogether. Partial liquidation comes in the next phase. Until then, borrowing well under your limit is the real protection.",
+      tone: BadgeTone.Neutral,
+      icon: IconName.Info,
+      title: "Worth knowing while we are early",
+      body: "For now, a liquidation closes the whole loan rather than just enough to make it safe again. Partial liquidation arrives in a later update, so leaving yourself a decent buffer matters more in the meantime.",
     },
   },
   {
     key: WelcomeStepKey.Ready,
-    eyebrow: "That is everything",
-    title: "Try it with fake money first",
+    shortLabel: "Try it",
+    eyebrow: "You are ready",
+    title: "Have a go with play money first",
+    takeaway: "Practice mode uses worthless test tokens.",
     icon: IconName.Beaker,
     paragraphs: [
-      "You now know as much as you need to start. The safest next step is practice mode, which runs this exact interface on a test network with worthless tokens.",
-      "Deposit, borrow, push a position until it gets liquidated, and see what that feels like before any real value is involved.",
+      "Practice mode is this exact app running on a test network. Deposit, borrow, and even watch a position get liquidated, all with tokens that are worth nothing.",
+      "When it feels familiar, the real thing works in exactly the same way.",
     ],
   },
 ];
 
 export const welcomePageContent = {
-  title: "Getting started",
-  description: "Six short steps covering how this platform works and what can go wrong. You can leave at any point.",
-  skipLabel: "Skip for now",
+  title: "Welcome",
+  description: "A quick tour of how this works. Around two minutes, and you can leave whenever you like.",
+  skipLabel: "Skip the tour",
   backLabel: "Back",
   nextLabel: "Continue",
-  practiceLabel: "Open practice mode",
-  finishLabel: "Go to markets",
-  progressLabel: "Onboarding progress",
+  practiceLabel: "Try practice mode",
+  finishLabel: "Take me to the app",
+  progressLabel: "Tour progress",
+  takeawayLabel: "In short",
+  reassurance: "Reading this changes nothing. No wallet is connected and no funds can move.",
 } as const;

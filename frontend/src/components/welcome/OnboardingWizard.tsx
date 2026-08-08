@@ -2,11 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { AppRoute, ButtonSize, ButtonVariant, IconName, WelcomeStepKey } from "@/lib/enums";
+import { AppRoute, ButtonSize, ButtonVariant, IconName } from "@/lib/enums";
 import { markOnboardingComplete } from "@/lib/storage";
 import { welcomePageContent, welcomeSteps } from "@/content/welcome";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Icon } from "@/components/ui/Icon";
 import { StepProgress } from "@/components/welcome/StepProgress";
 import { TourStep } from "@/components/welcome/TourStep";
 
@@ -29,14 +30,14 @@ export function OnboardingWizard() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <StepProgress current={index + 1} total={welcomeSteps.length} />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <StepProgress current={index + 1} onStepSelect={setIndex} />
 
         <Button
           variant={ButtonVariant.Ghost}
           size={ButtonSize.Sm}
+          className="self-start"
           onClick={() => complete(AppRoute.Markets)}
-          ariaLabel={welcomePageContent.skipLabel}
         >
           {welcomePageContent.skipLabel}
         </Button>
@@ -47,13 +48,16 @@ export function OnboardingWizard() {
       </Card>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Button
-          variant={ButtonVariant.Secondary}
-          disabled={isFirstStep}
-          onClick={() => setIndex((current) => Math.max(0, current - 1))}
-        >
-          {welcomePageContent.backLabel}
-        </Button>
+        {isFirstStep ? (
+          <span className="hidden sm:block" />
+        ) : (
+          <Button
+            variant={ButtonVariant.Secondary}
+            onClick={() => setIndex((current) => Math.max(0, current - 1))}
+          >
+            {welcomePageContent.backLabel}
+          </Button>
+        )}
 
         {isLastStep ? (
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -66,13 +70,19 @@ export function OnboardingWizard() {
           </div>
         ) : (
           <Button
+            size={ButtonSize.Lg}
             trailingIcon={IconName.ArrowRight}
             onClick={() => setIndex((current) => Math.min(welcomeSteps.length - 1, current + 1))}
           >
-            {step.key === WelcomeStepKey.Wallet ? "I understand" : welcomePageContent.nextLabel}
+            {welcomePageContent.nextLabel}
           </Button>
         )}
       </div>
+
+      <p className="flex items-center justify-center gap-2 text-xs text-ink-faint">
+        <Icon name={IconName.Lock} className="size-3.5 text-mint" />
+        {welcomePageContent.reassurance}
+      </p>
     </div>
   );
 }

@@ -45,6 +45,7 @@ export enum SectionId {
 }
 
 export enum WelcomeStepKey {
+  Overview = "overview",
   Wallet = "wallet",
   Lending = "lending",
   Borrowing = "borrowing",
@@ -353,4 +354,5 @@ export enum IconName {
   Warning = "warning",
   Loader = "loader",
   ChevronDown = "chevronDown",
+  Sparkles = "sparkles",
 }
