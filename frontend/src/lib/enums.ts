@@ -41,7 +41,19 @@ export enum SectionId {
   DashboardPositions = "your-positions",
   DashboardActivity = "recent-activity",
   LiquidationsList = "eligible-positions",
+  HistoryList = "transaction-history",
 }
+
+export enum DateRangePreset {
+  AllTime = "allTime",
+  Last7Days = "last7Days",
+  Last30Days = "last30Days",
+  Last90Days = "last90Days",
+}
+
+export const allTypesFilter = "all";
+
+export type TypeFilterValue = ActivityKind | typeof allTypesFilter;
 
 export enum LiquidationSortKey {
   Health = "health",

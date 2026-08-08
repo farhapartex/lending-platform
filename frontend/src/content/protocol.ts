@@ -57,6 +57,8 @@ export type UtilizationModel = {
 
 export const activeNetwork: NetworkKind = NetworkKind.Testnet;
 
+export const explorerTxBaseUrl = "https://sepolia.etherscan.io/tx/";
+
 export const marketDataStatus: DataStatus = DataStatus.Ready;
 
 export const protocolStatsStatus: DataStatus = DataStatus.Ready;

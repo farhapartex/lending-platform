@@ -37,6 +37,14 @@ export function formatValue(value: number, format: ValueFormat): string {
   return formatters[format].format(value);
 }
 
+export function truncateMiddle(value: string, leading: number, trailing: number): string {
+  if (value.length <= leading + trailing) {
+    return value;
+  }
+
+  return `${value.slice(0, leading)}…${value.slice(-trailing)}`;
+}
+
 const dateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
   month: "short",

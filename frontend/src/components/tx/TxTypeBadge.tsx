@@ -1,7 +1,7 @@
 import { ActivityKind, BadgeTone, IconName } from "@/lib/enums";
 import { Badge } from "@/components/ui/Badge";
 
-const labels: Record<ActivityKind, string> = {
+export const activityLabels: Record<ActivityKind, string> = {
   [ActivityKind.Deposit]: "Deposit",
   [ActivityKind.Withdraw]: "Withdrawal",
   [ActivityKind.Borrow]: "Borrow",
@@ -38,7 +38,7 @@ type TxTypeBadgeProps = {
 export function TxTypeBadge({ kind }: TxTypeBadgeProps) {
   return (
     <Badge tone={tones[kind]} icon={icons[kind]}>
-      {labels[kind]}
+      {activityLabels[kind]}
     </Badge>
   );
 }

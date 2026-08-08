@@ -1,14 +1,11 @@
 import { cn } from "@/lib/cn";
+import { truncateMiddle } from "@/lib/format";
 
 const leadingCharacters = 6;
 const trailingCharacters = 4;
 
 export function truncateAddress(address: string): string {
-  if (address.length <= leadingCharacters + trailingCharacters) {
-    return address;
-  }
-
-  return `${address.slice(0, leadingCharacters)}…${address.slice(-trailingCharacters)}`;
+  return truncateMiddle(address, leadingCharacters, trailingCharacters);
 }
 
 type AddressDisplayProps = {
