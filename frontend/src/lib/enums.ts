@@ -42,6 +42,14 @@ export enum SectionId {
   DashboardActivity = "recent-activity",
   LiquidationsList = "eligible-positions",
   HistoryList = "transaction-history",
+  PracticeExplainer = "what-is-real",
+  PracticeSetup = "getting-set-up",
+  PracticeIdeas = "things-to-try",
+}
+
+export enum FaucetStatus {
+  Ready = "ready",
+  CoolingDown = "coolingDown",
 }
 
 export enum WelcomeStepKey {
