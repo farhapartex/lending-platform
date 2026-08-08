@@ -44,6 +44,15 @@ export enum SectionId {
   HistoryList = "transaction-history",
 }
 
+export enum WelcomeStepKey {
+  Wallet = "wallet",
+  Lending = "lending",
+  Borrowing = "borrowing",
+  Health = "health",
+  Liquidation = "liquidation",
+  Ready = "ready",
+}
+
 export enum DocKey {
   HowItWorks = "howItWorks",
   HealthScore = "healthScore",
