@@ -1,6 +1,7 @@
 import { TrendDirection, ValueFormat } from "@/lib/enums";
 import { cn } from "@/lib/cn";
 import { formatValue } from "@/lib/format";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { TrendPill } from "@/components/ui/TrendPill";
 
 type StatTileProps = {
@@ -26,10 +27,10 @@ export function StatTile({ label, value, format, trend, trendLabel, className }:
 
 export function StatTileSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn("flex flex-col gap-2", className)} aria-hidden="true">
-      <span className="h-4 w-24 rounded-pill bg-surface-muted" />
-      <span className="h-8 w-32 rounded-tile bg-surface-muted" />
-      <span className="h-3.5 w-20 rounded-pill bg-surface-muted" />
+    <div className={cn("flex flex-col gap-2", className)}>
+      <Skeleton className="h-4 w-24 rounded-pill" />
+      <Skeleton className="h-8 w-32" />
+      <Skeleton className="h-3.5 w-20 rounded-pill" />
     </div>
   );
 }

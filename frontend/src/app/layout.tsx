@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { siteName, siteUrl } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,13 +15,33 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
+const description =
+  "Lend crypto to earn transparent, real-time yield, or borrow against assets you already own without selling them.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+  applicationName: siteName,
   title: {
-    default: "Lending Platform",
-    template: "%s · Lending Platform",
+    default: siteName,
+    template: `%s · ${siteName}`,
   },
-  description:
-    "Lend crypto to earn transparent, real-time yield, or borrow against assets you already own without selling them.",
+  description,
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    type: "website",
+    siteName,
+    title: siteName,
+    description,
+    url: siteUrl,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteName,
+    description,
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
