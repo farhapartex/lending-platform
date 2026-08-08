@@ -40,6 +40,13 @@ export enum SectionId {
   DashboardOverview = "portfolio-overview",
   DashboardPositions = "your-positions",
   DashboardActivity = "recent-activity",
+  LiquidationsList = "eligible-positions",
+}
+
+export enum LiquidationSortKey {
+  Health = "health",
+  Size = "size",
+  Reward = "reward",
 }
 
 export enum ActivityKind {

@@ -1,30 +1,22 @@
 import { AssetSymbol, RepayMode, TxFlowStatus } from "@/lib/enums";
-import { assetDecimals, assetPrices, borrowAprRate } from "@/content/protocol";
+import { assetDecimals, borrowAprRate } from "@/content/protocol";
 import { parseTokenAmount } from "@/lib/token";
-import { toPriceScaled } from "@/lib/health";
+
+export {
+  collateralAsset,
+  collateralDecimals,
+  collateralUnitPriceScaled,
+  debtAsset,
+  debtDecimals,
+  debtUnitPriceScaled,
+  liquidationBonusBps,
+  liquidationThresholdBps,
+  maxLtvBps,
+  recommendedLtvBps,
+} from "@/content/protocol";
 
 const wethDecimals = assetDecimals[AssetSymbol.Weth];
 const usdcDecimals = assetDecimals[AssetSymbol.Usdc];
-
-export const collateralAsset = AssetSymbol.Weth;
-
-export const debtAsset = AssetSymbol.Usdc;
-
-export const collateralDecimals = wethDecimals;
-
-export const debtDecimals = usdcDecimals;
-
-export const collateralUnitPriceScaled = toPriceScaled(assetPrices[AssetSymbol.Weth]);
-
-export const debtUnitPriceScaled = toPriceScaled(assetPrices[AssetSymbol.Usdc]);
-
-export const maxLtvBps = 7_500n;
-
-export const liquidationThresholdBps = 8_000n;
-
-export const recommendedLtvBps = 5_500n;
-
-export const liquidationBonusBps = 500n;
 
 export const collateralDeposited = parseTokenAmount("3.2", wethDecimals) ?? 0n;
 

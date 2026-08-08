@@ -10,6 +10,7 @@ import {
   TrendDirection,
   ValueFormat,
 } from "@/lib/enums";
+import { toPriceScaled } from "@/lib/health";
 
 export type ProtocolStat = {
   key: ProtocolStatKey;
@@ -105,6 +106,26 @@ export const assetPrices: Record<AssetSymbol, number> = {
 export const supplyApyRate = 0.0482;
 
 export const borrowAprRate = 0.0635;
+
+export const collateralAsset = AssetSymbol.Weth;
+
+export const debtAsset = AssetSymbol.Usdc;
+
+export const collateralDecimals = assetDecimals[AssetSymbol.Weth];
+
+export const debtDecimals = assetDecimals[AssetSymbol.Usdc];
+
+export const collateralUnitPriceScaled = toPriceScaled(assetPrices[AssetSymbol.Weth]);
+
+export const debtUnitPriceScaled = toPriceScaled(assetPrices[AssetSymbol.Usdc]);
+
+export const maxLtvBps = 7_500n;
+
+export const liquidationThresholdBps = 8_000n;
+
+export const recommendedLtvBps = 5_500n;
+
+export const liquidationBonusBps = 500n;
 
 export const marketMetrics: MarketMetric[] = [
   {

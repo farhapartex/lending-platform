@@ -77,12 +77,12 @@ export function healthTier(factorBps: bigint | null): HealthTier {
   return HealthTier.Liquidatable;
 }
 
-export function formatHealthFactor(factorBps: bigint | null): string {
+export function formatHealthFactor(factorBps: bigint | null, fractionDigits = 2): string {
   if (factorBps === null) {
     return "No loan";
   }
 
-  return (Number(factorBps) / Number(healthFactorScale)).toFixed(2);
+  return (Number(factorBps) / Number(healthFactorScale)).toFixed(fractionDigits);
 }
 
 export function borrowCapacity(
