@@ -4,9 +4,30 @@ export const priceScale = 100_000_000n;
 export const basisPoints = 10_000n;
 export const healthFactorScale = 10_000n;
 
-const safeTierBps = 15_000n;
-const cautionTierBps = 11_500n;
-const liquidationBps = 10_000n;
+export const safeTierBps = 15_000n;
+export const cautionTierBps = 11_500n;
+export const liquidationBps = 10_000n;
+
+export const healthTierLowerBounds: Record<HealthTier, bigint | null> = {
+  [HealthTier.Safe]: safeTierBps,
+  [HealthTier.Caution]: cautionTierBps,
+  [HealthTier.AtRisk]: liquidationBps,
+  [HealthTier.Liquidatable]: null,
+};
+
+export const healthTierUpperBounds: Record<HealthTier, bigint | null> = {
+  [HealthTier.Safe]: null,
+  [HealthTier.Caution]: safeTierBps,
+  [HealthTier.AtRisk]: cautionTierBps,
+  [HealthTier.Liquidatable]: liquidationBps,
+};
+
+export const healthTierOrder: HealthTier[] = [
+  HealthTier.Safe,
+  HealthTier.Caution,
+  HealthTier.AtRisk,
+  HealthTier.Liquidatable,
+];
 
 export function toPriceScaled(price: number): bigint {
   return BigInt(Math.round(price * Number(priceScale)));

@@ -37,6 +37,19 @@ export enum SectionId {
   BorrowCollateral = "your-collateral",
   BorrowDebt = "your-loan",
   BorrowSimulator = "price-simulator",
+  DashboardOverview = "portfolio-overview",
+  DashboardPositions = "your-positions",
+  DashboardActivity = "recent-activity",
+}
+
+export enum ActivityKind {
+  Deposit = "deposit",
+  Withdraw = "withdraw",
+  Borrow = "borrow",
+  Repay = "repay",
+  CollateralAdded = "collateralAdded",
+  CollateralWithdrawn = "collateralWithdrawn",
+  Liquidation = "liquidation",
 }
 
 export enum CollateralTab {
