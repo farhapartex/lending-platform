@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { BadgeTone, DataStatus, IconName, OracleStatus, SectionId, SectionTone } from "@/lib/enums";
-import { marketDataStatus, oracleReading } from "@/content/protocol";
+import { BadgeTone, DataStatus, IconName, SectionId, SectionTone } from "@/lib/enums";
+import { marketDataStatus } from "@/content/protocol";
 import { lendPageContent } from "@/content/lend";
 import { marketsPageContent } from "@/content/markets";
 import { Alert } from "@/components/ui/Alert";
 import { Container } from "@/components/ui/Container";
 import { Section } from "@/components/ui/Section";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { PriceStalenessWarning } from "@/components/markets/PriceStalenessWarning";
 import { UtilizationBar } from "@/components/markets/UtilizationBar";
 import { LendHeader } from "@/components/lend/LendHeader";
 import { LenderPositionCard } from "@/components/lend/LenderPositionCard";
@@ -33,14 +34,7 @@ export default function LendPage() {
     <>
       <LendHeader />
 
-      {oracleReading.status === OracleStatus.Stale ? (
-        <Container className="pt-6">
-          <Alert title="The price feed has not updated recently" tone={BadgeTone.Caution} icon={IconName.Warning}>
-            Deposits and withdrawals are paused while the price is stale, so you do not pay gas on a transaction that
-            would be rejected. This clears automatically once a fresh price arrives.
-          </Alert>
-        </Container>
-      ) : null}
+      <PriceStalenessWarning />
 
       <Section id={SectionId.LendAction} tone={SectionTone.Canvas}>
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:gap-10">

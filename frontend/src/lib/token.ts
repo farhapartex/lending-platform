@@ -44,6 +44,14 @@ export function formatTokenAmount(value: bigint, decimals: number, maxFractionDi
   return trimmedFraction === "" ? `${sign}${wholeText}` : `${sign}${wholeText}.${trimmedFraction}`;
 }
 
+export function toAmountInputValue(value: bigint, decimals: number): string {
+  const base = 10n ** BigInt(decimals);
+  const whole = (value / base).toString();
+  const fraction = (value % base).toString().padStart(decimals, "0").replace(/0+$/, "");
+
+  return fraction === "" ? whole : `${whole}.${fraction}`;
+}
+
 export function tokenAmountToUsd(value: bigint, decimals: number, unitPrice: number): number {
   const base = 10n ** BigInt(decimals);
   const whole = Number(value / base);

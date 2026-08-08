@@ -15,3 +15,5 @@ export const walletBalances: Record<AssetSymbol, bigint> = {
 };
 
 export const usdcAllowance: bigint = 0n;
+
+export const wethAllowance: bigint = 0n;

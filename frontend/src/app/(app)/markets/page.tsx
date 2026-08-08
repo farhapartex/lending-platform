@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { BadgeTone, DataStatus, IconName, OracleStatus } from "@/lib/enums";
-import { marketDataStatus, oracleReading } from "@/content/protocol";
+import { BadgeTone, DataStatus, IconName } from "@/lib/enums";
+import { marketDataStatus } from "@/content/protocol";
 import { marketsPageContent } from "@/content/markets";
 import { Alert } from "@/components/ui/Alert";
 import { Container } from "@/components/ui/Container";
 import { MarketHeader } from "@/components/markets/MarketHeader";
+import { PriceStalenessWarning } from "@/components/markets/PriceStalenessWarning";
 import { ProtocolStatsGrid } from "@/components/markets/ProtocolStatsGrid";
 import { MarketCard } from "@/components/markets/MarketCard";
 import { RateExplainer } from "@/components/markets/RateExplainer";
@@ -31,14 +32,7 @@ export default function MarketsPage() {
     <>
       <MarketHeader />
 
-      {oracleReading.status === OracleStatus.Stale ? (
-        <Container className="pt-6">
-          <Alert title="The price feed has not updated recently" tone={BadgeTone.Caution} icon={IconName.ShieldCheck}>
-            Deposits, borrows, and liquidations are paused while the price is stale. This protects you from acting on an
-            out-of-date number, and it clears automatically once a fresh price arrives.
-          </Alert>
-        </Container>
-      ) : null}
+      <PriceStalenessWarning />
 
       <ProtocolStatsGrid />
       <MarketCard />

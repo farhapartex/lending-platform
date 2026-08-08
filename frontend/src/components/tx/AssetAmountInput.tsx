@@ -3,7 +3,13 @@
 import { AssetSymbol, ButtonSize, ButtonVariant, ValueFormat } from "@/lib/enums";
 import { cn } from "@/lib/cn";
 import { formatValue } from "@/lib/format";
-import { formatTokenAmount, parseTokenAmount, sanitizeAmountInput, tokenAmountToUsd } from "@/lib/token";
+import {
+  formatTokenAmount,
+  parseTokenAmount,
+  sanitizeAmountInput,
+  toAmountInputValue,
+  tokenAmountToUsd,
+} from "@/lib/token";
 import { Button } from "@/components/ui/Button";
 
 type AssetAmountInputProps = {
@@ -68,7 +74,7 @@ export function AssetAmountInput({
         <Button
           variant={ButtonVariant.Subtle}
           size={ButtonSize.Sm}
-          onClick={() => onChange(formatTokenAmountForInput(maxAmount, decimals))}
+          onClick={() => onChange(toAmountInputValue(maxAmount, decimals))}
         >
           Max
         </Button>
@@ -77,12 +83,4 @@ export function AssetAmountInput({
       <span className="text-xs text-ink-faint tabular-nums">≈ {formatValue(usdValue, ValueFormat.UsdPrice)}</span>
     </div>
   );
-}
-
-function formatTokenAmountForInput(value: bigint, decimals: number): string {
-  const base = 10n ** BigInt(decimals);
-  const whole = (value / base).toString();
-  const fraction = (value % base).toString().padStart(decimals, "0").replace(/0+$/, "");
-
-  return fraction === "" ? whole : `${whole}.${fraction}`;
 }

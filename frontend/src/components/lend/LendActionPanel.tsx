@@ -53,6 +53,10 @@ const depositMessages: Record<AmountValidationCode, string | null> = {
   [AmountValidationCode.ExceedsWalletBalance]: "That is more than your wallet holds.",
   [AmountValidationCode.ExceedsDeposit]: null,
   [AmountValidationCode.ExceedsAvailableLiquidity]: null,
+  [AmountValidationCode.ExceedsCollateral]: null,
+  [AmountValidationCode.ExceedsSafeWithdrawal]: null,
+  [AmountValidationCode.ExceedsBorrowLimit]: null,
+  [AmountValidationCode.ExceedsDebt]: null,
 };
 
 const withdrawMessages: Record<AmountValidationCode, string | null> = {
@@ -64,6 +68,10 @@ const withdrawMessages: Record<AmountValidationCode, string | null> = {
   [AmountValidationCode.ExceedsDeposit]: "That is more than you have deposited.",
   [AmountValidationCode.ExceedsAvailableLiquidity]:
     "Your balance covers this, but the pool does not have enough liquid funds right now. This is a pool liquidity limit, not a limit on what you own.",
+  [AmountValidationCode.ExceedsCollateral]: null,
+  [AmountValidationCode.ExceedsSafeWithdrawal]: null,
+  [AmountValidationCode.ExceedsBorrowLimit]: null,
+  [AmountValidationCode.ExceedsDebt]: null,
 };
 
 export function LendActionPanel() {

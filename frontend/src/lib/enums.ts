@@ -33,6 +33,32 @@ export enum SectionId {
   LendPosition = "your-position",
   LendAction = "deposit-and-withdraw",
   LendMarket = "market-conditions",
+  BorrowHealth = "position-health",
+  BorrowCollateral = "your-collateral",
+  BorrowDebt = "your-loan",
+  BorrowSimulator = "price-simulator",
+}
+
+export enum CollateralTab {
+  Deposit = "depositCollateral",
+  Withdraw = "withdrawCollateral",
+}
+
+export enum DebtTab {
+  Borrow = "borrow",
+  Repay = "repay",
+}
+
+export enum RepayMode {
+  Partial = "partial",
+  Full = "full",
+}
+
+export enum HealthTier {
+  Safe = "safe",
+  Caution = "caution",
+  AtRisk = "atRisk",
+  Liquidatable = "liquidatable",
 }
 
 export enum LendTab {
@@ -70,6 +96,10 @@ export enum AmountValidationCode {
   ExceedsWalletBalance = "exceedsWalletBalance",
   ExceedsDeposit = "exceedsDeposit",
   ExceedsAvailableLiquidity = "exceedsAvailableLiquidity",
+  ExceedsCollateral = "exceedsCollateral",
+  ExceedsSafeWithdrawal = "exceedsSafeWithdrawal",
+  ExceedsBorrowLimit = "exceedsBorrowLimit",
+  ExceedsDebt = "exceedsDebt",
 }
 
 export enum ButtonVariant {
