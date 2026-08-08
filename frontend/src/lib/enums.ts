@@ -224,6 +224,7 @@ export enum AppNavLinkKey {
   Lend = "lend",
   Borrow = "borrow",
   Dashboard = "dashboard",
+  History = "history",
   Liquidations = "liquidations",
   Learn = "learn",
 }

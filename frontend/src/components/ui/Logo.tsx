@@ -4,9 +4,10 @@ import { cn } from "@/lib/cn";
 
 type LogoProps = {
   className?: string;
+  labelClassName?: string;
 };
 
-export function Logo({ className }: LogoProps) {
+export function Logo({ className, labelClassName }: LogoProps) {
   return (
     <Link
       href={AppRoute.Home}
@@ -20,7 +21,7 @@ export function Logo({ className }: LogoProps) {
           <path d="M6 15.5l4-4.5 3.5 3 4.5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </span>
-      <span className="text-base font-semibold tracking-tight text-ink">Lending Platform</span>
+      <span className={cn("text-base font-semibold tracking-tight text-ink", labelClassName)}>Lending Platform</span>
     </Link>
   );
 }

@@ -45,6 +45,7 @@ export const appNavLinks: AppNavLink[] = [
   { key: AppNavLinkKey.Lend, label: "Lend", href: AppRoute.Lend },
   { key: AppNavLinkKey.Borrow, label: "Borrow", href: AppRoute.Borrow },
   { key: AppNavLinkKey.Dashboard, label: "Dashboard", href: AppRoute.Dashboard },
+  { key: AppNavLinkKey.History, label: "History", href: AppRoute.History },
   { key: AppNavLinkKey.Liquidations, label: "Liquidations", href: AppRoute.Liquidations },
   { key: AppNavLinkKey.Learn, label: "Learn", href: AppRoute.Learn },
 ];

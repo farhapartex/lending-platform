@@ -16,7 +16,7 @@ import { WalletConnectButton } from "@/components/app/WalletConnectButton";
 const mobilePanelId = "app-nav-panel";
 
 const baseLinkClasses =
-  "rounded-pill px-3 py-2 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-canvas";
+  "whitespace-nowrap rounded-pill px-3 py-2 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-canvas";
 
 const inactiveLinkClasses = "text-ink-soft hover:bg-surface-muted hover:text-ink";
 
@@ -32,7 +32,7 @@ export function TopNav() {
     <header className="sticky top-0 z-40 border-b border-line bg-canvas/90 backdrop-blur-md">
       <Container className="flex h-16 items-center justify-between gap-4">
         <div className="flex items-center gap-6">
-          <Logo />
+          <Logo labelClassName="lg:hidden xl:inline" />
           <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
             {appNavLinks.map((link) => (
               <Link
