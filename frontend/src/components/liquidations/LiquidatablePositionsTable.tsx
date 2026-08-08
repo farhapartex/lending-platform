@@ -14,7 +14,7 @@ export function LiquidatablePositionsTable({ rows, onSelect }: LiquidatablePosit
   return (
     <Card elevation={SurfaceElevation.Raised} className="overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-3xl border-collapse text-left">
+        <table className="w-full min-w-[46rem] border-collapse text-left">
           <caption className="sr-only">Positions currently eligible for liquidation</caption>
           <thead>
             <tr className="bg-surface-muted">
@@ -22,7 +22,7 @@ export function LiquidatablePositionsTable({ rows, onSelect }: LiquidatablePosit
                 <th
                   key={header === "" ? `actions-${index}` : header}
                   scope="col"
-                  className="px-5 py-3 text-xs font-medium uppercase tracking-[0.08em] text-ink-faint"
+                  className="whitespace-nowrap px-5 py-3 text-xs font-medium uppercase tracking-[0.08em] text-ink-faint"
                 >
                   {header === "" ? <span className="sr-only">Actions</span> : header}
                 </th>

@@ -310,4 +310,5 @@ export enum IconName {
   Info = "info",
   Warning = "warning",
   Loader = "loader",
+  ChevronDown = "chevronDown",
 }

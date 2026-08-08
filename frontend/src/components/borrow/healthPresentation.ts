@@ -7,6 +7,13 @@ export const healthLabels: Record<HealthTier, string> = {
   [HealthTier.Liquidatable]: "Liquidation possible now",
 };
 
+export const healthShortLabels: Record<HealthTier, string> = {
+  [HealthTier.Safe]: "Safe",
+  [HealthTier.Caution]: "Caution",
+  [HealthTier.AtRisk]: "At risk",
+  [HealthTier.Liquidatable]: "Liquidatable",
+};
+
 export const healthTones: Record<HealthTier, BadgeTone> = {
   [HealthTier.Safe]: BadgeTone.Positive,
   [HealthTier.Caution]: BadgeTone.Caution,

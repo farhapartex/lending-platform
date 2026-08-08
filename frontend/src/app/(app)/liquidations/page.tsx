@@ -32,7 +32,7 @@ export default function LiquidationsPage() {
             {liquidationsPageContent.unavailableDescription}
           </Alert>
         ) : (
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-10">
+          <div className="flex flex-col gap-6">
             <LiquidationsPanel />
             <HowLiquidationWorksCallout />
           </div>

@@ -16,11 +16,11 @@ type LiquidatePositionRowProps = {
 export function LiquidatePositionRow({ row, onSelect }: LiquidatePositionRowProps) {
   return (
     <tr className="border-t border-line align-middle">
-      <td className="px-5 py-4">
+      <td className="whitespace-nowrap px-5 py-4">
         <AddressDisplay address={row.borrower} />
       </td>
 
-      <td className="px-5 py-4">
+      <td className="whitespace-nowrap px-5 py-4">
         <div className="flex flex-col gap-0.5">
           <span className="text-sm font-medium text-ink tabular-nums">
             {formatTokenAmount(row.collateralAmount, collateralDecimals, 4)} {AssetSymbol.Weth}
@@ -31,26 +31,26 @@ export function LiquidatePositionRow({ row, onSelect }: LiquidatePositionRowProp
         </div>
       </td>
 
-      <td className="px-5 py-4">
+      <td className="whitespace-nowrap px-5 py-4">
         <span className="text-sm font-medium text-ink tabular-nums">
           {formatTokenAmount(row.debtAmount, debtDecimals, 2)} {AssetSymbol.Usdc}
         </span>
       </td>
 
-      <td className="px-5 py-4">
-        <div className="flex flex-col items-start gap-1.5">
-          <HealthBadge tier={healthTier(row.factorBps)} />
+      <td className="whitespace-nowrap px-5 py-4">
+        <div className="flex items-center gap-2">
+          <HealthBadge tier={healthTier(row.factorBps)} compact />
           <span className="text-xs text-ink-soft tabular-nums">{formatHealthFactor(row.factorBps, 4)}</span>
         </div>
       </td>
 
-      <td className="px-5 py-4">
+      <td className="whitespace-nowrap px-5 py-4">
         <span className="text-sm font-semibold text-mint-ink tabular-nums">
           {formatValue(scaledValueToUsd(row.bonusValueScaled), ValueFormat.UsdPrice)}
         </span>
       </td>
 
-      <td className="px-5 py-4 text-right">
+      <td className="whitespace-nowrap px-5 py-4 text-right">
         <Button variant={ButtonVariant.Secondary} size={ButtonSize.Sm} onClick={() => onSelect(row)}>
           Liquidate
         </Button>

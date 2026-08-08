@@ -1,7 +1,7 @@
 "use client";
 
 import { LiquidationSortKey } from "@/lib/enums";
-import { Select } from "@/components/ui/Select";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { AutoRefreshIndicator } from "@/components/liquidations/AutoRefreshIndicator";
 
 const sortOptions = [
@@ -26,13 +26,13 @@ export function FilterSortControls({ sortKey, onSortChange, visibleCount }: Filt
         <AutoRefreshIndicator />
       </div>
 
-      <Select
+      <Dropdown
         id="liquidation-sort"
         label="Sort by"
         value={sortKey}
         options={sortOptions}
         onChange={onSortChange}
-        className="min-w-56"
+        className="w-60"
       />
     </div>
   );
