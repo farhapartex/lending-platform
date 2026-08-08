@@ -44,6 +44,26 @@ export enum SectionId {
   HistoryList = "transaction-history",
 }
 
+export enum DocKey {
+  HowItWorks = "howItWorks",
+  HealthScore = "healthScore",
+  Liquidation = "liquidation",
+  Fees = "fees",
+  Faq = "faq",
+  Glossary = "glossary",
+}
+
+export enum DocBlockKind {
+  Prose = "prose",
+  Bullets = "bullets",
+  Callout = "callout",
+  FeeTable = "feeTable",
+  BonusExample = "bonusExample",
+  Faq = "faq",
+  Glossary = "glossary",
+  HealthTiers = "healthTiers",
+}
+
 export enum DateRangePreset {
   AllTime = "allTime",
   Last7Days = "last7Days",
