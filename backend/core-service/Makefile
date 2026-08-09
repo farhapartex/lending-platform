@@ -3,7 +3,7 @@ VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
 LDFLAGS := -s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT)
 
-.PHONY: tidy fmt vet build run test docker-build
+.PHONY: tidy fmt vet build run test docker-build migrate-up migrate-down migrate-status migrate-reset
 
 tidy:
 	go mod tidy
@@ -25,3 +25,15 @@ test:
 
 docker-build:
 	docker build --build-arg VERSION=$(VERSION) --build-arg COMMIT=$(COMMIT) -t $(SERVICE):$(VERSION) .
+
+migrate-up:
+	go run ./cmd/migrate -command up
+
+migrate-down:
+	go run ./cmd/migrate -command down
+
+migrate-status:
+	go run ./cmd/migrate -command status
+
+migrate-reset:
+	go run ./cmd/migrate -command reset

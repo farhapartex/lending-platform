@@ -24,6 +24,13 @@ type Config struct {
 	WriteTimeout   time.Duration
 	IdleTimeout    time.Duration
 	ShutdownGrace  time.Duration
+
+	DatabaseURL             string
+	DatabaseMaxOpenConns    int
+	DatabaseMaxIdleConns    int
+	DatabaseConnMaxLifetime time.Duration
+	DatabaseConnMaxIdleTime time.Duration
+	DatabaseLogQueries      bool
 }
 
 func (c Config) IsLocal() bool {
@@ -36,6 +43,7 @@ func Load(serviceVersion string) (Config, error) {
 		ServiceName:    env("SERVICE_NAME", "core-service"),
 		ServiceVersion: serviceVersion,
 		LogLevel:       env("LOG_LEVEL", "info"),
+		DatabaseURL:    env("DATABASE_URL", ""),
 	}
 
 	port, err := envInt("HTTP_PORT", 8080)
@@ -43,6 +51,24 @@ func Load(serviceVersion string) (Config, error) {
 		return Config{}, err
 	}
 	cfg.HTTPPort = port
+
+	maxOpen, err := envInt("DATABASE_MAX_OPEN_CONNS", 20)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.DatabaseMaxOpenConns = maxOpen
+
+	maxIdle, err := envInt("DATABASE_MAX_IDLE_CONNS", 10)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.DatabaseMaxIdleConns = maxIdle
+
+	logQueries, err := envBool("DATABASE_LOG_QUERIES", false)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.DatabaseLogQueries = logQueries
 
 	durations := []struct {
 		key    string
@@ -53,6 +79,8 @@ func Load(serviceVersion string) (Config, error) {
 		{"HTTP_WRITE_TIMEOUT", 15 * time.Second, &cfg.WriteTimeout},
 		{"HTTP_IDLE_TIMEOUT", 60 * time.Second, &cfg.IdleTimeout},
 		{"SHUTDOWN_GRACE_PERIOD", 15 * time.Second, &cfg.ShutdownGrace},
+		{"DATABASE_CONN_MAX_LIFETIME", 30 * time.Minute, &cfg.DatabaseConnMaxLifetime},
+		{"DATABASE_CONN_MAX_IDLE_TIME", 5 * time.Minute, &cfg.DatabaseConnMaxIdleTime},
 	}
 
 	for _, d := range durations {
@@ -91,6 +119,17 @@ func (c Config) validate() error {
 		return fmt.Errorf("SERVICE_NAME must not be empty")
 	}
 
+	if c.DatabaseMaxOpenConns < 1 {
+		return fmt.Errorf("DATABASE_MAX_OPEN_CONNS must be at least 1: got %d", c.DatabaseMaxOpenConns)
+	}
+
+	if c.DatabaseMaxIdleConns < 0 || c.DatabaseMaxIdleConns > c.DatabaseMaxOpenConns {
+		return fmt.Errorf(
+			"DATABASE_MAX_IDLE_CONNS must be between 0 and DATABASE_MAX_OPEN_CONNS (%d): got %d",
+			c.DatabaseMaxOpenConns, c.DatabaseMaxIdleConns,
+		)
+	}
+
 	return nil
 }
 
@@ -111,6 +150,20 @@ func envInt(key string, fallback int) (int, error) {
 	value, err := strconv.Atoi(raw)
 	if err != nil {
 		return 0, fmt.Errorf("%s must be an integer: got %q", key, raw)
+	}
+
+	return value, nil
+}
+
+func envBool(key string, fallback bool) (bool, error) {
+	raw := strings.TrimSpace(os.Getenv(key))
+	if raw == "" {
+		return fallback, nil
+	}
+
+	value, err := strconv.ParseBool(raw)
+	if err != nil {
+		return false, fmt.Errorf("%s must be true or false: got %q", key, raw)
 	}
 
 	return value, nil
