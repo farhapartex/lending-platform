@@ -1,0 +1,9 @@
+.env
+.env.local
+
+bin/
+tmp/
+core-service
+
+coverage.out
+*.test

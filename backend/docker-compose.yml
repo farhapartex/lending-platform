@@ -1,0 +1,76 @@
+name: lending-platform
+
+services:
+  postgres:
+    image: postgres:18.4-alpine
+    container_name: lending-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lending}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lending}
+      POSTGRES_DB: ${POSTGRES_DB:-lending}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lending} -d ${POSTGRES_DB:-lending}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - lending
+
+  redis:
+    image: redis:8.10-alpine
+    container_name: lending-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - lending
+
+  core-service:
+    build:
+      context: ./core-service
+      dockerfile: Dockerfile
+      args:
+        VERSION: ${VERSION:-dev}
+        COMMIT: ${COMMIT:-unknown}
+    container_name: lending-core-service
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      SERVICE_NAME: core-service
+      HTTP_PORT: 8080
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgres://${POSTGRES_USER:-lending}:${POSTGRES_PASSWORD:-lending}@postgres:5432/${POSTGRES_DB:-lending}?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "${CORE_SERVICE_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - lending
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  lending:
+    driver: bridge
