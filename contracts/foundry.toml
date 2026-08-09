@@ -19,6 +19,9 @@ bytecode_hash = "none"
 
 gas_reports = ["*"]
 
+[lint]
+exclude_lints = ["block-timestamp"]
+
 [profile.default.fmt]
 line_length = 110
 tab_width = 4
