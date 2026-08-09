@@ -4,7 +4,6 @@ import {
   DataStatus,
   FeeKind,
   MarketMetricKey,
-  NetworkKind,
   OracleStatus,
   ProtocolStatKey,
   TrendDirection,
@@ -54,8 +53,6 @@ export type UtilizationModel = {
   current: number;
   kink: number;
 };
-
-export const activeNetwork: NetworkKind = NetworkKind.Testnet;
 
 export const explorerTxBaseUrl = "https://sepolia.etherscan.io/tx/";
 

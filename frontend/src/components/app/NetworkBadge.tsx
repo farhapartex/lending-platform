@@ -1,17 +1,24 @@
-import { BadgeTone, NetworkKind } from "@/lib/enums";
-import { activeNetwork } from "@/content/protocol";
+"use client";
+
+import { BadgeTone, WalletStatus } from "@/lib/enums";
+import { chainDisplayName, isTestnetChain } from "@/lib/chain";
+import { useWalletState } from "@/hooks/useWalletState";
 import { Badge } from "@/components/ui/Badge";
 
-const networkLabels: Record<NetworkKind, string> = {
-  [NetworkKind.Mainnet]: "Mainnet",
-  [NetworkKind.Testnet]: "Testnet",
-};
-
-const networkTones: Record<NetworkKind, BadgeTone> = {
-  [NetworkKind.Mainnet]: BadgeTone.Neutral,
-  [NetworkKind.Testnet]: BadgeTone.Caution,
-};
-
 export function NetworkBadge() {
-  return <Badge tone={networkTones[activeNetwork]}>{networkLabels[activeNetwork]}</Badge>;
+  const { status, chainId } = useWalletState();
+
+  if (status === WalletStatus.Disconnected || status === WalletStatus.Connecting) {
+    return null;
+  }
+
+  if (status === WalletStatus.WrongNetwork) {
+    return <Badge tone={BadgeTone.Critical}>{chainDisplayName(chainId)}</Badge>;
+  }
+
+  return (
+    <Badge tone={isTestnetChain(chainId) ? BadgeTone.Caution : BadgeTone.Neutral}>
+      {chainDisplayName(chainId)}
+    </Badge>
+  );
 }

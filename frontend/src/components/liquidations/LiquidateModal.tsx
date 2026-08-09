@@ -1,6 +1,17 @@
 "use client";
 
-import { AssetSymbol, BadgeTone, ButtonSize, ButtonVariant, IconName, StepState } from "@/lib/enums";
+import {
+  AssetSymbol,
+  BadgeTone,
+  ButtonSize,
+  ButtonVariant,
+  IconName,
+  StepState,
+  WalletGatePurpose,
+  WalletStatus,
+} from "@/lib/enums";
+import { useWalletState } from "@/hooks/useWalletState";
+import { WalletGate } from "@/components/app/WalletGate";
 import { formatTokenAmount } from "@/lib/token";
 import { debtDecimals } from "@/content/protocol";
 import { estimatedGasUsd, liquidatorUsdcBalance, txFlowStatus } from "@/content/liquidations";
@@ -22,11 +33,14 @@ type LiquidateModalProps = {
 };
 
 export function LiquidateModal({ row, onClose }: LiquidateModalProps) {
+  const { status: walletStatus } = useWalletState();
+
   if (row === null) {
     return null;
   }
 
   const canAfford = liquidatorUsdcBalance >= row.debtAmount;
+  const isConnected = walletStatus === WalletStatus.Connected;
 
   const reviewRows = [
     { label: "Estimated network gas", value: estimatedGasUsd },
@@ -46,9 +60,11 @@ export function LiquidateModal({ row, onClose }: LiquidateModalProps) {
           <Button variant={ButtonVariant.Ghost} size={ButtonSize.Md} onClick={onClose}>
             Cancel
           </Button>
-          <Button size={ButtonSize.Md} disabled={!canAfford}>
-            Repay and claim collateral
-          </Button>
+          {isConnected ? (
+            <Button size={ButtonSize.Md} disabled={!canAfford}>
+              Repay and claim collateral
+            </Button>
+          ) : null}
         </div>
       }
     >
@@ -67,35 +83,39 @@ export function LiquidateModal({ row, onClose }: LiquidateModalProps) {
           </Alert>
         ) : null}
 
-        {canAfford ? null : (
-          <Alert title="Not enough USDC to repay this loan" tone={BadgeTone.Caution} icon={IconName.Warning}>
-            You need {formatTokenAmount(row.debtAmount, debtDecimals, 2)} {AssetSymbol.Usdc} to settle this position, and
-            your wallet holds less than that.
-          </Alert>
-        )}
+        <WalletGate purpose={WalletGatePurpose.Liquidate} skeletonClassName="h-32 rounded-card">
+          <div className="flex flex-col gap-5">
+            {canAfford ? null : (
+              <Alert title="Not enough USDC to repay this loan" tone={BadgeTone.Caution} icon={IconName.Warning}>
+                You need {formatTokenAmount(row.debtAmount, debtDecimals, 2)} {AssetSymbol.Usdc} to settle this
+                position, and your wallet holds less than that.
+              </Alert>
+            )}
 
-        <ApprovalStep
-          steps={[
-            {
-              label: `Approve ${AssetSymbol.Usdc}`,
-              description: "A one-time permission letting the pool collect your repayment.",
-              state: StepState.Active,
-            },
-            {
-              label: "Liquidate",
-              description: "Repays the loan and transfers the collateral, plus your bonus, to you.",
-              state: StepState.Upcoming,
-            },
-          ]}
-        />
+            <ApprovalStep
+              steps={[
+                {
+                  label: `Approve ${AssetSymbol.Usdc}`,
+                  description: "A one-time permission letting the pool collect your repayment.",
+                  state: StepState.Active,
+                },
+                {
+                  label: "Liquidate",
+                  description: "Repays the loan and transfers the collateral, plus your bonus, to you.",
+                  state: StepState.Upcoming,
+                },
+              ]}
+            />
 
-        <TxReviewSheet title="Costs" rows={reviewRows} />
+            <TxReviewSheet title="Costs" rows={reviewRows} />
 
-        <EligibilityRecheckNotice />
+            <EligibilityRecheckNotice />
 
-        <RaceConditionNotice />
+            <RaceConditionNotice />
 
-        <TxStatusTracker status={txFlowStatus} />
+            <TxStatusTracker status={txFlowStatus} />
+          </div>
+        </WalletGate>
       </div>
     </Modal>
   );

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AppRoute, ButtonVariant, IconName, SectionId, SectionTone } from "@/lib/enums";
+import { AppRoute, ButtonVariant, IconName, SectionId, SectionTone, WalletGatePurpose } from "@/lib/enums";
 import { assetPrices } from "@/content/protocol";
 import { depositedBalance, lendAssetDecimals } from "@/content/lend";
 import {
@@ -65,7 +65,7 @@ export default function DashboardPage() {
           {dashboardContent.overviewTitle}
         </h2>
 
-        <WalletGate>
+        <WalletGate purpose={WalletGatePurpose.PersonalData}>
           {hasNoPositions ? (
             <EmptyState
               title={dashboardContent.emptyTitle}

@@ -1,34 +1,46 @@
-import { ButtonSize, ButtonVariant, IconName, WalletStatus } from "@/lib/enums";
-import { walletAddress, walletStatus } from "@/content/wallet";
-import { AddressDisplay } from "@/components/ui/AddressDisplay";
-import { Button } from "@/components/ui/Button";
-import { Icon } from "@/components/ui/Icon";
+"use client";
 
-const labels: Record<WalletStatus, string> = {
-  [WalletStatus.Disconnected]: "Connect wallet",
-  [WalletStatus.Connecting]: "Connecting",
-  [WalletStatus.Connected]: "",
-  [WalletStatus.WrongNetwork]: "Wrong network",
+import { useState } from "react";
+import { ButtonSize, ButtonVariant, IconName, WalletStatus } from "@/lib/enums";
+import { useWalletState } from "@/hooks/useWalletState";
+import { Button } from "@/components/ui/Button";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { AccountMenu } from "@/components/app/AccountMenu";
+import { WalletProviderModal } from "@/components/app/WalletProviderModal";
+
+type WalletConnectButtonProps = {
+  size?: ButtonSize;
+  fullWidth?: boolean;
 };
 
-export function WalletConnectButton() {
-  if (walletStatus === WalletStatus.Connected) {
-    return (
-      <span className="inline-flex items-center gap-2 rounded-pill border border-line-strong bg-surface px-3 py-2">
-        <Icon name={IconName.Wallet} className="size-4 text-mint" />
-        <AddressDisplay address={walletAddress} />
-      </span>
-    );
+export function WalletConnectButton({ size = ButtonSize.Sm, fullWidth = false }: WalletConnectButtonProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { status, address, chainId, isSettling } = useWalletState();
+
+  if (isSettling) {
+    return <Skeleton className="h-9 w-36 rounded-pill" />;
+  }
+
+  if (status === WalletStatus.Connected || status === WalletStatus.WrongNetwork) {
+    if (address !== undefined) {
+      return <AccountMenu address={address} chainId={chainId} />;
+    }
   }
 
   return (
-    <Button
-      variant={walletStatus === WalletStatus.WrongNetwork ? ButtonVariant.Primary : ButtonVariant.Secondary}
-      size={ButtonSize.Sm}
-      leadingIcon={IconName.Wallet}
-      disabled
-    >
-      {labels[walletStatus]}
-    </Button>
+    <>
+      <Button
+        variant={status === WalletStatus.WrongNetwork ? ButtonVariant.Primary : ButtonVariant.Secondary}
+        size={size}
+        fullWidth={fullWidth}
+        leadingIcon={IconName.Wallet}
+        disabled={status === WalletStatus.Connecting}
+        onClick={() => setIsModalOpen(true)}
+      >
+        {status === WalletStatus.Connecting ? "Connecting" : "Connect wallet"}
+      </Button>
+
+      <WalletProviderModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
+    </>
   );
 }

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { BadgeTone, DataStatus, IconName, SectionId, SectionTone } from "@/lib/enums";
+import { BadgeTone, DataStatus, IconName, SectionId, SectionTone, WalletGatePurpose } from "@/lib/enums";
 import { historyDataStatus, historyPageContent } from "@/content/history";
 import { Alert } from "@/components/ui/Alert";
 import { Container } from "@/components/ui/Container";
@@ -28,7 +28,7 @@ export default function HistoryPage() {
             {historyPageContent.unavailableDescription}
           </Alert>
         ) : (
-          <WalletGate>
+          <WalletGate purpose={WalletGatePurpose.PersonalData}>
             <HistoryPanel />
           </WalletGate>
         )}

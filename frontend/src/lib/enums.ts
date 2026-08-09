@@ -136,6 +136,13 @@ export enum LendTab {
   Withdraw = "withdraw",
 }
 
+export enum WalletGatePurpose {
+  Action = "action",
+  PersonalData = "personalData",
+  Liquidate = "liquidate",
+  Faucet = "faucet",
+}
+
 export enum WalletStatus {
   Disconnected = "disconnected",
   Connecting = "connecting",
