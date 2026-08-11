@@ -16,6 +16,10 @@ interface ILendingPool {
 
     function totalBorrowed() external view returns (uint256);
 
+    function borrowIndex() external view returns (uint256);
+
+    function accrueInterest() external;
+
     function availableLiquidity() external view returns (uint256);
 
     function sharesOf(address lender) external view returns (uint256);
