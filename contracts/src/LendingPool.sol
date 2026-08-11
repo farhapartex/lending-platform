@@ -30,6 +30,7 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
     event DepositsPausedChanged(bool isPaused);
     event ReserveFactorChanged(uint16 previousBps, uint16 newBps);
     event RateModelChanged(address previousModel, address newModel);
+    event ControllerLinked(address controller);
 
     uint16 private constant MAX_RESERVE_FACTOR_BPS = 5000;
 
@@ -44,6 +45,8 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
 
     IInterestRateModel public rateModel;
 
+    address public controller;
+
     uint256 public totalSupplyShares;
 
     uint256 public totalDebtShares;
@@ -53,6 +56,8 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
     uint256 public minDeposit;
 
     mapping(address => uint256) public sharesOf;
+
+    mapping(address => uint256) public debtSharesOf;
 
     constructor(
         address owner,
@@ -84,6 +89,82 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
 
     function asset() external view returns (address) {
         return address(assetToken);
+    }
+
+    function linkController(address newController) external onlyOwner {
+        if (newController == address(0)) {
+            revert Errors.ZeroAddress();
+        }
+
+        if (controller != address(0)) {
+            revert Errors.AlreadyInitialized();
+        }
+
+        controller = newController;
+
+        emit ControllerLinked(newController);
+    }
+
+    function debtOf(address borrower) public view returns (uint256) {
+        return ShareMath.assetsFromSharesUp(debtSharesOf[borrower], borrowIndexValue);
+    }
+
+    function borrowFor(address borrower, address recipient, uint256 amount) external nonReentrant {
+        _requireController();
+
+        accrueInterest();
+
+        uint256 liquidity = availableLiquidity();
+        if (amount > liquidity) {
+            revert Errors.NotEnoughLiquidity(amount, liquidity);
+        }
+
+        uint256 shares = ShareMath.sharesFromAssetsUp(amount, borrowIndexValue);
+
+        debtSharesOf[borrower] += shares;
+        totalDebtShares += shares;
+
+        assetToken.safeTransfer(recipient, amount);
+    }
+
+    function repayFor(address borrower, address payer, uint256 amount) external nonReentrant {
+        _requireController();
+
+        accrueInterest();
+
+        uint256 shares = ShareMath.sharesFromAssetsDown(amount, borrowIndexValue);
+        uint256 ownedShares = debtSharesOf[borrower];
+
+        if (shares > ownedShares) {
+            shares = ownedShares;
+        }
+
+        debtSharesOf[borrower] = ownedShares - shares;
+        totalDebtShares -= shares;
+
+        assetToken.safeTransferFrom(payer, address(this), amount);
+    }
+
+    function repayAllFor(address borrower, address payer) external nonReentrant returns (uint256 amountPaid) {
+        _requireController();
+
+        accrueInterest();
+
+        uint256 ownedShares = debtSharesOf[borrower];
+        amountPaid = ShareMath.assetsFromSharesUp(ownedShares, borrowIndexValue);
+
+        debtSharesOf[borrower] = 0;
+        totalDebtShares -= ownedShares;
+
+        assetToken.safeTransferFrom(payer, address(this), amountPaid);
+
+        return amountPaid;
+    }
+
+    function _requireController() private view {
+        if (msg.sender != controller) {
+            revert Errors.NotAuthorized(msg.sender);
+        }
     }
 
     function supplyIndex() public view returns (uint256) {
