@@ -12,6 +12,7 @@ import {IPriceOracle} from "./interfaces/IPriceOracle.sol";
 import {Errors} from "./libraries/Errors.sol";
 import {HealthMath} from "./libraries/HealthMath.sol";
 import {LiquidationMath} from "./libraries/LiquidationMath.sol";
+import {ShareMath} from "./libraries/ShareMath.sol";
 
 contract LiquidationManager is ILiquidationManager, ReentrancyGuard {
     event LiquidationExecuted(
@@ -116,7 +117,9 @@ contract LiquidationManager is ILiquidationManager, ReentrancyGuard {
         (uint256 collateralPrice, uint8 priceDecimals) = oracle.getPrice(collateralAsset);
         (uint256 debtPrice,) = oracle.getPrice(debtAsset);
 
-        uint256 owed = pool.debtOf(borrower);
+        (, uint256 borrowIndexNow,) = pool.previewAccrual();
+
+        uint256 owed = ShareMath.assetsFromSharesUp(pool.debtSharesOf(borrower), borrowIndexNow);
         uint256 held = vault.collateralOf(borrower);
 
         uint256 debtValue = HealthMath.valueOfAmount(owed, debtDecimals, debtPrice);

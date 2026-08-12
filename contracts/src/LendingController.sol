@@ -11,6 +11,7 @@ import {ILendingPool} from "./interfaces/ILendingPool.sol";
 import {IPriceOracle} from "./interfaces/IPriceOracle.sol";
 import {Errors} from "./libraries/Errors.sol";
 import {HealthMath} from "./libraries/HealthMath.sol";
+import {ShareMath} from "./libraries/ShareMath.sol";
 import {WadMath} from "./libraries/WadMath.sol";
 
 contract LendingController is ILendingController, Ownable, ReentrancyGuard {
@@ -85,7 +86,7 @@ contract LendingController is ILendingController, Ownable, ReentrancyGuard {
     }
 
     function debtOf(address borrower) public view returns (uint256) {
-        return pool.debtOf(borrower);
+        return _currentDebt(borrower);
     }
 
     function collateralValueOf(address borrower) public view returns (uint256) {
@@ -97,7 +98,7 @@ contract LendingController is ILendingController, Ownable, ReentrancyGuard {
     function debtValueOf(address borrower) public view returns (uint256) {
         (uint256 price,) = oracle.getPrice(debtAsset);
 
-        return HealthMath.valueOfAmount(pool.debtOf(borrower), debtDecimals, price);
+        return HealthMath.valueOfAmount(_currentDebt(borrower), debtDecimals, price);
     }
 
     function healthFactorBps(address borrower) public view returns (uint256) {
@@ -112,13 +113,13 @@ contract LendingController is ILendingController, Ownable, ReentrancyGuard {
     }
 
     function maxBorrowable(address borrower) public view returns (uint256) {
-        uint256 fromCollateral = _borrowRoomFromCollateral(borrower);
+        uint256 fromCollateral = _borrowRoomFromCollateral(borrower, _currentDebt(borrower));
 
         return WadMath.smaller(fromCollateral, pool.availableLiquidity());
     }
 
     function maxWithdrawableCollateral(address borrower) external view returns (uint256) {
-        uint256 owed = pool.debtOf(borrower);
+        uint256 owed = _currentDebt(borrower);
         uint256 held = vault.collateralOf(borrower);
 
         if (owed == 0) {
@@ -145,7 +146,7 @@ contract LendingController is ILendingController, Ownable, ReentrancyGuard {
 
         pool.accrueInterest();
 
-        uint256 collateralRoom = _borrowRoomFromCollateral(msg.sender);
+        uint256 collateralRoom = _borrowRoomFromCollateral(msg.sender, pool.debtOf(msg.sender));
         if (amount > collateralRoom) {
             revert Errors.ExceedsBorrowLimit(amount, collateralRoom);
         }
@@ -194,16 +195,22 @@ contract LendingController is ILendingController, Ownable, ReentrancyGuard {
         return amountPaid;
     }
 
-    function _borrowRoomFromCollateral(address borrower) private view returns (uint256) {
+    function _borrowRoomFromCollateral(address borrower, uint256 owed) private view returns (uint256) {
         (uint256 collateralPrice,) = oracle.getPrice(collateralAsset);
         (uint256 debtPrice,) = oracle.getPrice(debtAsset);
 
         uint256 collateralValue =
             HealthMath.valueOfAmount(vault.collateralOf(borrower), collateralDecimals, collateralPrice);
-        uint256 debtValue = HealthMath.valueOfAmount(pool.debtOf(borrower), debtDecimals, debtPrice);
+        uint256 debtValue = HealthMath.valueOfAmount(owed, debtDecimals, debtPrice);
 
         return
             HealthMath.remainingBorrowAmount(collateralValue, debtValue, maxLtvBps, debtDecimals, debtPrice);
+    }
+
+    function _currentDebt(address borrower) private view returns (uint256) {
+        (, uint256 borrowIndexNow,) = pool.previewAccrual();
+
+        return ShareMath.assetsFromSharesUp(pool.debtSharesOf(borrower), borrowIndexNow);
     }
 
     function _storeRiskSettings(uint16 newMaxLtvBps, uint16 newThresholdBps, uint16 newBonusBps) private {

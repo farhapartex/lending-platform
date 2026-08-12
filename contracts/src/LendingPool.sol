@@ -265,44 +265,65 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
         emit RateModelChanged(previousModel, address(newModel));
     }
 
-    function accrueInterest() public {
+    function previewAccrual()
+        public
+        view
+        returns (uint256 nextSupplyIndex, uint256 nextBorrowIndex, uint256 reservesToAdd)
+    {
+        nextSupplyIndex = supplyIndexValue;
+        nextBorrowIndex = borrowIndexValue;
+
         uint256 elapsedSeconds = block.timestamp - lastAccrualAt;
 
         if (elapsedSeconds == 0) {
-            return;
+            return (nextSupplyIndex, nextBorrowIndex, 0);
         }
 
-        lastAccrualAt = uint40(block.timestamp);
-
-        uint256 borrowedBefore = totalBorrowed();
+        uint256 borrowedBefore = ShareMath.assetsFromSharesUp(totalDebtShares, nextBorrowIndex);
 
         if (borrowedBefore == 0) {
-            return;
+            return (nextSupplyIndex, nextBorrowIndex, 0);
         }
 
-        uint256 suppliedBefore = totalSupplied();
+        uint256 suppliedBefore = ShareMath.assetsFromSharesDown(totalSupplyShares, nextSupplyIndex);
         uint256 ratePerSecond =
             rateModel.borrowRatePerSecond(rateModel.utilizationBps(suppliedBefore, borrowedBefore));
 
         uint256 growth = InterestMath.growthFactor(ratePerSecond, elapsedSeconds);
 
         if (growth == 0) {
-            return;
+            return (nextSupplyIndex, nextBorrowIndex, 0);
         }
 
         uint256 interest = InterestMath.interestOnDebt(borrowedBefore, growth);
         (uint256 reserveShare, uint256 lendersShare) =
             InterestMath.splitForReserves(interest, reserveFactorBps);
 
-        uint256 nextBorrowIndex = InterestMath.grownBorrowIndex(borrowIndexValue, growth);
-        uint256 nextSupplyIndex =
-            InterestMath.grownSupplyIndex(supplyIndexValue, lendersShare, suppliedBefore);
+        return (
+            InterestMath.grownSupplyIndex(nextSupplyIndex, lendersShare, suppliedBefore),
+            InterestMath.grownBorrowIndex(nextBorrowIndex, growth),
+            reserveShare
+        );
+    }
+
+    function accrueInterest() public {
+        if (block.timestamp == lastAccrualAt) {
+            return;
+        }
+
+        (uint256 nextSupplyIndex, uint256 nextBorrowIndex, uint256 reservesToAdd) = previewAccrual();
+
+        lastAccrualAt = uint40(block.timestamp);
+
+        if (nextBorrowIndex == borrowIndexValue) {
+            return;
+        }
 
         borrowIndexValue = SafeCast.toUint128(nextBorrowIndex);
         supplyIndexValue = SafeCast.toUint128(nextSupplyIndex);
-        accruedReserves += reserveShare;
+        accruedReserves += reservesToAdd;
 
-        emit InterestAccrued(nextSupplyIndex, nextBorrowIndex, totalBorrowed(), reserveShare);
+        emit InterestAccrued(nextSupplyIndex, nextBorrowIndex, totalBorrowed(), reservesToAdd);
     }
 
     function deposit(uint256 assets) external nonReentrant returns (uint256 shares) {

@@ -27,4 +27,6 @@ interface ILendingController {
     function liquidationThresholdBps() external view returns (uint16);
 
     function liquidationBonusBps() external view returns (uint16);
+
+    function borrowPaused() external view returns (bool);
 }

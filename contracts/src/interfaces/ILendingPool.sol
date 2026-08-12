@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
+import {IInterestRateModel} from "./IInterestRateModel.sol";
+
 interface ILendingPool {
     function asset() external view returns (address);
 
@@ -20,6 +22,11 @@ interface ILendingPool {
 
     function accrueInterest() external;
 
+    function previewAccrual()
+        external
+        view
+        returns (uint256 nextSupplyIndex, uint256 nextBorrowIndex, uint256 reservesToAdd);
+
     function liquidationManager() external view returns (address);
 
     function debtOf(address borrower) external view returns (uint256);
@@ -34,9 +41,23 @@ interface ILendingPool {
 
     function sharesOf(address lender) external view returns (uint256);
 
+    function debtSharesOf(address borrower) external view returns (uint256);
+
+    function totalSupplyShares() external view returns (uint256);
+
+    function totalDebtShares() external view returns (uint256);
+
     function balanceOfAssets(address lender) external view returns (uint256);
 
     function maxWithdrawable(address lender) external view returns (uint256);
 
     function minDeposit() external view returns (uint256);
+
+    function accruedReserves() external view returns (uint256);
+
+    function reserveFactorBps() external view returns (uint16);
+
+    function depositsPaused() external view returns (bool);
+
+    function rateModel() external view returns (IInterestRateModel);
 }
