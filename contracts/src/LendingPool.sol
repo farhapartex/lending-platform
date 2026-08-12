@@ -31,6 +31,7 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
     event ReserveFactorChanged(uint16 previousBps, uint16 newBps);
     event RateModelChanged(address previousModel, address newModel);
     event ControllerLinked(address controller);
+    event LiquidationManagerLinked(address liquidationManager);
 
     uint16 private constant MAX_RESERVE_FACTOR_BPS = 5000;
 
@@ -46,6 +47,8 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
     IInterestRateModel public rateModel;
 
     address public controller;
+
+    address public liquidationManager;
 
     uint256 public totalSupplyShares;
 
@@ -105,6 +108,20 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
         emit ControllerLinked(newController);
     }
 
+    function linkLiquidationManager(address newLiquidationManager) external onlyOwner {
+        if (newLiquidationManager == address(0)) {
+            revert Errors.ZeroAddress();
+        }
+
+        if (liquidationManager != address(0)) {
+            revert Errors.AlreadyInitialized();
+        }
+
+        liquidationManager = newLiquidationManager;
+
+        emit LiquidationManagerLinked(newLiquidationManager);
+    }
+
     function debtOf(address borrower) public view returns (uint256) {
         return ShareMath.assetsFromSharesUp(debtSharesOf[borrower], borrowIndexValue);
     }
@@ -146,7 +163,7 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
     }
 
     function repayAllFor(address borrower, address payer) external nonReentrant returns (uint256 amountPaid) {
-        _requireController();
+        _requireDebtManager();
 
         accrueInterest();
 
@@ -163,6 +180,12 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
 
     function _requireController() private view {
         if (msg.sender != controller) {
+            revert Errors.NotAuthorized(msg.sender);
+        }
+    }
+
+    function _requireDebtManager() private view {
+        if (msg.sender != controller && msg.sender != liquidationManager) {
             revert Errors.NotAuthorized(msg.sender);
         }
     }

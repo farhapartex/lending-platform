@@ -20,6 +20,8 @@ interface ILendingPool {
 
     function accrueInterest() external;
 
+    function liquidationManager() external view returns (address);
+
     function debtOf(address borrower) external view returns (uint256);
 
     function borrowFor(address borrower, address recipient, uint256 amount) external;
