@@ -17,6 +17,19 @@
   },
   {
     "type": "function",
+    "name": "REQUIRED_FEED_DECIMALS",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "feedOf",
     "inputs": [
       {
@@ -330,6 +343,27 @@
         "name": "value",
         "type": "int256",
         "internalType": "int256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "UnsupportedFeedDecimals",
+    "inputs": [
+      {
+        "name": "aggregator",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "provided",
+        "type": "uint8",
+        "internalType": "uint8"
+      },
+      {
+        "name": "expected",
+        "type": "uint8",
+        "internalType": "uint8"
       }
     ]
   },

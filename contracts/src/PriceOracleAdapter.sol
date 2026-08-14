@@ -14,6 +14,8 @@ contract PriceOracleAdapter is IPriceOracle, Ownable {
         uint8 decimals;
     }
 
+    uint8 public constant REQUIRED_FEED_DECIMALS = 8;
+
     event FeedChanged(address indexed asset, address aggregator, uint8 decimals);
     event MaxPriceAgeChanged(uint32 previousAge, uint32 newAge);
 
@@ -37,6 +39,10 @@ contract PriceOracleAdapter is IPriceOracle, Ownable {
         }
 
         uint8 feedDecimals = IAggregatorV3(aggregator).decimals();
+
+        if (feedDecimals != REQUIRED_FEED_DECIMALS) {
+            revert Errors.UnsupportedFeedDecimals(aggregator, feedDecimals, REQUIRED_FEED_DECIMALS);
+        }
 
         feeds[asset] = Feed({aggregator: aggregator, decimals: feedDecimals});
 

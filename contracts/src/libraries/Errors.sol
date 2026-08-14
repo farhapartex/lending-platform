@@ -22,6 +22,8 @@ library Errors {
 
     error ExceedsDebt(uint256 requested, uint256 owed);
 
+    error ExceedsReserves(uint256 requested, uint256 available);
+
     error ExceedsCollateralBalance(uint256 requested, uint256 held);
 
     error WouldBreakBorrowLimit(uint256 requested, uint256 safeAmount);
@@ -31,6 +33,8 @@ library Errors {
     error PriceIsStale(address asset, uint256 updatedAt, uint256 maxAge);
 
     error PriceIsInvalid(address asset);
+
+    error UnsupportedFeedDecimals(address aggregator, uint8 provided, uint8 expected);
 
     error InvalidRiskSettings();
 }

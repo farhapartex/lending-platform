@@ -1008,6 +1008,23 @@ export const lendingPoolAbi = [
   },
   {
     type: 'function',
+    inputs: [{ name: 'recipient', internalType: 'address', type: 'address' }],
+    name: 'collectAllReserves',
+    outputs: [{ name: 'collected', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'recipient', internalType: 'address', type: 'address' },
+      { name: 'amount', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'collectReserves',
+    outputs: [{ name: 'collected', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
     inputs: [],
     name: 'controller',
     outputs: [{ name: '', internalType: 'address', type: 'address' }],
@@ -1444,6 +1461,31 @@ export const lendingPoolAbi = [
     anonymous: false,
     inputs: [
       {
+        name: 'recipient',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'amount',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+      {
+        name: 'remainingReserves',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'ReservesCollected',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
         name: 'lender',
         internalType: 'address',
         type: 'address',
@@ -1484,6 +1526,14 @@ export const lendingPoolAbi = [
       { name: 'minimum', internalType: 'uint256', type: 'uint256' },
     ],
     name: 'BelowMinimumDeposit',
+  },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'requested', internalType: 'uint256', type: 'uint256' },
+      { name: 'available', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'ExceedsReserves',
   },
   {
     type: 'error',
@@ -2286,6 +2336,13 @@ export const priceOracleAdapterAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'REQUIRED_FEED_DECIMALS',
+    outputs: [{ name: '', internalType: 'uint8', type: 'uint8' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
     inputs: [{ name: 'asset', internalType: 'address', type: 'address' }],
     name: 'feedOf',
     outputs: [{ name: '', internalType: 'address', type: 'address' }],
@@ -2465,6 +2522,15 @@ export const priceOracleAdapterAbi = [
     type: 'error',
     inputs: [{ name: 'value', internalType: 'int256', type: 'int256' }],
     name: 'SafeCastOverflowedIntToUint',
+  },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'aggregator', internalType: 'address', type: 'address' },
+      { name: 'provided', internalType: 'uint8', type: 'uint8' },
+      { name: 'expected', internalType: 'uint8', type: 'uint8' },
+    ],
+    name: 'UnsupportedFeedDecimals',
   },
   { type: 'error', inputs: [], name: 'ZeroAddress' },
 ] as const
@@ -3515,6 +3581,24 @@ export const useWriteLendingPoolBorrowFor =
   })
 
 /**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link lendingPoolAbi}__ and `functionName` set to `"collectAllReserves"`
+ */
+export const useWriteLendingPoolCollectAllReserves =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: lendingPoolAbi,
+    functionName: 'collectAllReserves',
+  })
+
+/**
+ * Wraps __{@link useWriteContract}__ with `abi` set to __{@link lendingPoolAbi}__ and `functionName` set to `"collectReserves"`
+ */
+export const useWriteLendingPoolCollectReserves =
+  /*#__PURE__*/ createUseWriteContract({
+    abi: lendingPoolAbi,
+    functionName: 'collectReserves',
+  })
+
+/**
  * Wraps __{@link useWriteContract}__ with `abi` set to __{@link lendingPoolAbi}__ and `functionName` set to `"deposit"`
  */
 export const useWriteLendingPoolDeposit = /*#__PURE__*/ createUseWriteContract({
@@ -3649,6 +3733,24 @@ export const useSimulateLendingPoolBorrowFor =
   /*#__PURE__*/ createUseSimulateContract({
     abi: lendingPoolAbi,
     functionName: 'borrowFor',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link lendingPoolAbi}__ and `functionName` set to `"collectAllReserves"`
+ */
+export const useSimulateLendingPoolCollectAllReserves =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: lendingPoolAbi,
+    functionName: 'collectAllReserves',
+  })
+
+/**
+ * Wraps __{@link useSimulateContract}__ with `abi` set to __{@link lendingPoolAbi}__ and `functionName` set to `"collectReserves"`
+ */
+export const useSimulateLendingPoolCollectReserves =
+  /*#__PURE__*/ createUseSimulateContract({
+    abi: lendingPoolAbi,
+    functionName: 'collectReserves',
   })
 
 /**
@@ -3853,6 +3955,15 @@ export const useWatchLendingPoolReserveFactorChangedEvent =
   /*#__PURE__*/ createUseWatchContractEvent({
     abi: lendingPoolAbi,
     eventName: 'ReserveFactorChanged',
+  })
+
+/**
+ * Wraps __{@link useWatchContractEvent}__ with `abi` set to __{@link lendingPoolAbi}__ and `eventName` set to `"ReservesCollected"`
+ */
+export const useWatchLendingPoolReservesCollectedEvent =
+  /*#__PURE__*/ createUseWatchContractEvent({
+    abi: lendingPoolAbi,
+    eventName: 'ReservesCollected',
   })
 
 /**
@@ -4467,6 +4578,15 @@ export const useReadPositionLensVault = /*#__PURE__*/ createUseReadContract({
 export const useReadPriceOracleAdapter = /*#__PURE__*/ createUseReadContract({
   abi: priceOracleAdapterAbi,
 })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link priceOracleAdapterAbi}__ and `functionName` set to `"REQUIRED_FEED_DECIMALS"`
+ */
+export const useReadPriceOracleAdapterRequiredFeedDecimals =
+  /*#__PURE__*/ createUseReadContract({
+    abi: priceOracleAdapterAbi,
+    functionName: 'REQUIRED_FEED_DECIMALS',
+  })
 
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link priceOracleAdapterAbi}__ and `functionName` set to `"feedOf"`

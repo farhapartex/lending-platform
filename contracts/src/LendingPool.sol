@@ -32,6 +32,7 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
     event RateModelChanged(address previousModel, address newModel);
     event ControllerLinked(address controller);
     event LiquidationManagerLinked(address liquidationManager);
+    event ReservesCollected(address indexed recipient, uint256 amount, uint256 remainingReserves);
 
     uint16 private constant MAX_RESERVE_FACTOR_BPS = 5000;
 
@@ -263,6 +264,59 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
         rateModel = newModel;
 
         emit RateModelChanged(previousModel, address(newModel));
+    }
+
+    function collectReserves(address recipient, uint256 amount)
+        external
+        onlyOwner
+        nonReentrant
+        returns (uint256 collected)
+    {
+        if (amount == 0) {
+            revert Errors.ZeroAmount();
+        }
+
+        return _collectReserves(recipient, amount);
+    }
+
+    function collectAllReserves(address recipient)
+        external
+        onlyOwner
+        nonReentrant
+        returns (uint256 collected)
+    {
+        accrueInterest();
+
+        uint256 available = accruedReserves;
+
+        if (available == 0) {
+            revert Errors.ZeroAmount();
+        }
+
+        return _collectReserves(recipient, available);
+    }
+
+    function _collectReserves(address recipient, uint256 amount) private returns (uint256 collected) {
+        if (recipient == address(0)) {
+            revert Errors.ZeroAddress();
+        }
+
+        accrueInterest();
+
+        uint256 available = accruedReserves;
+
+        if (amount > available) {
+            revert Errors.ExceedsReserves(amount, available);
+        }
+
+        uint256 remaining = available - amount;
+        accruedReserves = remaining;
+
+        assetToken.safeTransfer(recipient, amount);
+
+        emit ReservesCollected(recipient, amount, remaining);
+
+        return amount;
     }
 
     function previewAccrual()
