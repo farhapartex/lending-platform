@@ -1,0 +1,333 @@
+[
+  {
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "lendingPool",
+        "type": "address",
+        "internalType": "contract ILendingPool"
+      },
+      {
+        "name": "collateralVault",
+        "type": "address",
+        "internalType": "contract ICollateralVault"
+      },
+      {
+        "name": "priceOracle",
+        "type": "address",
+        "internalType": "contract IPriceOracle"
+      },
+      {
+        "name": "lendingController",
+        "type": "address",
+        "internalType": "contract ILendingController"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "accountData",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "data",
+        "type": "tuple",
+        "internalType": "struct AccountData",
+        "components": [
+          {
+            "name": "supplyShares",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "supplyAssets",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "collateralAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "collateralValue",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "debtAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "debtValue",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "healthFactorBps",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "maxBorrowable",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "maxWithdrawableCollateral",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "collateralPrice",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "priceUpdatedAt",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "isLiquidatable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "priceStale",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "collateralAsset",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "collateralDecimals",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "controller",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract ILendingController"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "debtAsset",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "debtDecimals",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "marketData",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "data",
+        "type": "tuple",
+        "internalType": "struct MarketData",
+        "components": [
+          {
+            "name": "totalSupplied",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "totalBorrowed",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "availableLiquidity",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "utilizationBps",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "supplyRatePerSecond",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "borrowRatePerSecond",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "supplyAprBps",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "borrowAprBps",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "supplyIndex",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "borrowIndex",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "maxLtvBps",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidationThresholdBps",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "liquidationBonusBps",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "kinkUtilizationBps",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "reserveFactorBps",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "minDeposit",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "accruedReserves",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "depositsPaused",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "borrowPaused",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "oracle",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IPriceOracle"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "pool",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract ILendingPool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "vault",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract ICollateralVault"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "error",
+    "name": "ZeroAddress",
+    "inputs": []
+  }
+]

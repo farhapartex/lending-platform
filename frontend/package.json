@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start -p 5173",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "wagmi": "wagmi generate"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.4",
@@ -22,6 +23,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@wagmi/cli": "^2.10.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
     "tailwindcss": "^4",
