@@ -19,6 +19,16 @@ bytecode_hash = "none"
 
 gas_reports = ["*"]
 
+[fuzz]
+runs = 512
+max_test_rejects = 200000
+
+[invariant]
+runs = 256
+depth = 64
+fail_on_revert = false
+shrink_run_limit = 5000
+
 [lint]
 exclude_lints = ["block-timestamp"]
 
