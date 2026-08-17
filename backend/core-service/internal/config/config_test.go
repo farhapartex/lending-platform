@@ -272,6 +272,70 @@ func TestIDMaskSecretAcceptedWhenLongEnough(t *testing.T) {
 	}
 }
 
+func TestCacheSettingsDefaults(t *testing.T) {
+	setRequiredChainEnv(t)
+
+	cfg, err := Load("test")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if cfg.CacheEnabled() {
+		t.Fatal("expected the cache to be disabled when REDIS_URL is unset")
+	}
+
+	if cfg.CacheNamespace != cfg.ServiceName {
+		t.Fatalf("expected the namespace to default to the service name, got %q", cfg.CacheNamespace)
+	}
+
+	if cfg.CacheRequestTimeout != 2*time.Second {
+		t.Fatalf("expected a 2s default cache timeout, got %s", cfg.CacheRequestTimeout)
+	}
+}
+
+func TestCacheSettingsOverrides(t *testing.T) {
+	setRequiredChainEnv(t)
+
+	t.Setenv("REDIS_URL", "redis://localhost:6379/0")
+	t.Setenv("CACHE_NAMESPACE", "lending-cache")
+	t.Setenv("CACHE_REQUEST_TIMEOUT", "5s")
+
+	cfg, err := Load("test")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !cfg.CacheEnabled() {
+		t.Fatal("expected the cache to be enabled")
+	}
+
+	if cfg.RedisURL != "redis://localhost:6379/0" {
+		t.Fatalf("unexpected redis url %q", cfg.RedisURL)
+	}
+
+	if cfg.CacheNamespace != "lending-cache" {
+		t.Fatalf("unexpected namespace %q", cfg.CacheNamespace)
+	}
+
+	if cfg.CacheRequestTimeout != 5*time.Second {
+		t.Fatalf("unexpected cache timeout %s", cfg.CacheRequestTimeout)
+	}
+}
+
+func TestCacheRequestTimeoutMustBeValid(t *testing.T) {
+	setRequiredChainEnv(t)
+	t.Setenv("CACHE_REQUEST_TIMEOUT", "instantly")
+
+	_, err := Load("test")
+	if err == nil {
+		t.Fatal("expected an error for an invalid cache timeout")
+	}
+
+	if !strings.Contains(err.Error(), "CACHE_REQUEST_TIMEOUT") {
+		t.Fatalf("expected the error to mention CACHE_REQUEST_TIMEOUT, got %v", err)
+	}
+}
+
 func TestEnvHelpersFallBackOnBlankValues(t *testing.T) {
 	t.Setenv("BLANK_STRING", "   ")
 	if got := env("BLANK_STRING", "fallback"); got != "fallback" {

@@ -57,6 +57,8 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       DATABASE_URL: postgres://${POSTGRES_USER:-lending}:${POSTGRES_PASSWORD:-lending}@postgres:5432/${POSTGRES_DB:-lending}?sslmode=disable
       REDIS_URL: redis://redis:6379/0
+      CACHE_NAMESPACE: ${CACHE_NAMESPACE:-core-service}
+      CACHE_REQUEST_TIMEOUT: ${CACHE_REQUEST_TIMEOUT:-2s}
       ID_MASK_SECRET: ${ID_MASK_SECRET:-}
       CHAIN_ID: ${CHAIN_ID:-31337}
       CHAIN_RPC_URL: ${CHAIN_RPC_URL:-http://host.docker.internal:8545}

@@ -45,6 +45,10 @@ type Config struct {
 
 	IDMaskSecret string
 
+	RedisURL            string
+	CacheNamespace      string
+	CacheRequestTimeout time.Duration
+
 	Chain ChainConfig
 }
 
@@ -60,6 +64,7 @@ func Load(serviceVersion string) (Config, error) {
 		LogLevel:       env("LOG_LEVEL", "info"),
 		DatabaseURL:    env("DATABASE_URL", ""),
 		IDMaskSecret:   env("ID_MASK_SECRET", ""),
+		RedisURL:       env("REDIS_URL", ""),
 	}
 
 	port, err := envInt("HTTP_PORT", 8080)
@@ -106,6 +111,14 @@ func Load(serviceVersion string) (Config, error) {
 		}
 		*d.target = value
 	}
+
+	cfg.CacheNamespace = env("CACHE_NAMESPACE", cfg.ServiceName)
+
+	cacheTimeout, err := envDuration("CACHE_REQUEST_TIMEOUT", 2*time.Second)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.CacheRequestTimeout = cacheTimeout
 
 	chain, err := loadChain()
 	if err != nil {
@@ -157,6 +170,10 @@ func (c Config) validate() error {
 	}
 
 	return nil
+}
+
+func (c Config) CacheEnabled() bool {
+	return c.RedisURL != ""
 }
 
 func (c Config) validateIDMaskSecret() error {
