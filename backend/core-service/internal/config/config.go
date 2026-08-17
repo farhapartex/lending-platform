@@ -12,7 +12,18 @@ const (
 	EnvLocal      = "local"
 	EnvStaging    = "staging"
 	EnvProduction = "production"
+
+	localIDMaskSecret     = "local-development-id-mask-secret"
+	minIDMaskSecretLength = 32
 )
+
+func (c Config) EffectiveIDMaskSecret() string {
+	if c.IDMaskSecret != "" {
+		return c.IDMaskSecret
+	}
+
+	return localIDMaskSecret
+}
 
 type Config struct {
 	AppEnv         string
@@ -32,6 +43,8 @@ type Config struct {
 	DatabaseConnMaxIdleTime time.Duration
 	DatabaseLogQueries      bool
 
+	IDMaskSecret string
+
 	Chain ChainConfig
 }
 
@@ -46,6 +59,7 @@ func Load(serviceVersion string) (Config, error) {
 		ServiceVersion: serviceVersion,
 		LogLevel:       env("LOG_LEVEL", "info"),
 		DatabaseURL:    env("DATABASE_URL", ""),
+		IDMaskSecret:   env("ID_MASK_SECRET", ""),
 	}
 
 	port, err := envInt("HTTP_PORT", 8080)
@@ -135,6 +149,25 @@ func (c Config) validate() error {
 		return fmt.Errorf(
 			"DATABASE_MAX_IDLE_CONNS must be between 0 and DATABASE_MAX_OPEN_CONNS (%d): got %d",
 			c.DatabaseMaxOpenConns, c.DatabaseMaxIdleConns,
+		)
+	}
+
+	if err := c.validateIDMaskSecret(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c Config) validateIDMaskSecret() error {
+	if c.IsLocal() {
+		return nil
+	}
+
+	if len(c.IDMaskSecret) < minIDMaskSecretLength {
+		return fmt.Errorf(
+			"ID_MASK_SECRET must be at least %d characters outside local: got %d",
+			minIDMaskSecretLength, len(c.IDMaskSecret),
 		)
 	}
 

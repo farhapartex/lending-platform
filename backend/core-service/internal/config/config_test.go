@@ -89,6 +89,7 @@ func TestLoadReadsOverrides(t *testing.T) {
 	t.Setenv("DATABASE_MAX_IDLE_CONNS", "5")
 	t.Setenv("DATABASE_LOG_QUERIES", "true")
 	t.Setenv("HTTP_READ_TIMEOUT", "30s")
+	t.Setenv("ID_MASK_SECRET", strings.Repeat("s", minIDMaskSecretLength))
 
 	cfg, err := Load("test")
 	if err != nil {
@@ -201,6 +202,73 @@ func TestValidateRejectsEmptyServiceName(t *testing.T) {
 
 	if !strings.Contains(err.Error(), "SERVICE_NAME") {
 		t.Fatalf("expected the error to mention SERVICE_NAME, got %v", err)
+	}
+}
+
+func TestIDMaskSecretIsOptionalLocally(t *testing.T) {
+	setRequiredChainEnv(t)
+
+	cfg, err := Load("test")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if cfg.IDMaskSecret != "" {
+		t.Fatalf("expected no configured secret locally, got %q", cfg.IDMaskSecret)
+	}
+
+	if cfg.EffectiveIDMaskSecret() != localIDMaskSecret {
+		t.Fatalf("expected the local fallback secret, got %q", cfg.EffectiveIDMaskSecret())
+	}
+}
+
+func TestIDMaskSecretIsRequiredOutsideLocal(t *testing.T) {
+	for _, appEnv := range []string{EnvStaging, EnvProduction} {
+		t.Run(appEnv, func(t *testing.T) {
+			setRequiredChainEnv(t)
+			t.Setenv("APP_ENV", appEnv)
+
+			_, err := Load("test")
+			if err == nil {
+				t.Fatalf("expected an error when the secret is missing in %s", appEnv)
+			}
+
+			if !strings.Contains(err.Error(), "ID_MASK_SECRET") {
+				t.Fatalf("expected the error to mention ID_MASK_SECRET, got %v", err)
+			}
+		})
+	}
+}
+
+func TestIDMaskSecretRejectsShortValuesOutsideLocal(t *testing.T) {
+	setRequiredChainEnv(t)
+	t.Setenv("APP_ENV", EnvProduction)
+	t.Setenv("ID_MASK_SECRET", strings.Repeat("a", minIDMaskSecretLength-1))
+
+	_, err := Load("test")
+	if err == nil {
+		t.Fatal("expected a short secret to be rejected")
+	}
+
+	if !strings.Contains(err.Error(), "ID_MASK_SECRET") {
+		t.Fatalf("expected the error to mention ID_MASK_SECRET, got %v", err)
+	}
+}
+
+func TestIDMaskSecretAcceptedWhenLongEnough(t *testing.T) {
+	setRequiredChainEnv(t)
+	t.Setenv("APP_ENV", EnvProduction)
+
+	secret := strings.Repeat("s", minIDMaskSecretLength)
+	t.Setenv("ID_MASK_SECRET", secret)
+
+	cfg, err := Load("test")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if cfg.EffectiveIDMaskSecret() != secret {
+		t.Fatalf("expected the configured secret to be used, got %q", cfg.EffectiveIDMaskSecret())
 	}
 }
 
