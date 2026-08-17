@@ -31,6 +31,8 @@ type Config struct {
 	DatabaseConnMaxLifetime time.Duration
 	DatabaseConnMaxIdleTime time.Duration
 	DatabaseLogQueries      bool
+
+	Chain ChainConfig
 }
 
 func (c Config) IsLocal() bool {
@@ -91,6 +93,12 @@ func Load(serviceVersion string) (Config, error) {
 		*d.target = value
 	}
 
+	chain, err := loadChain()
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.Chain = chain
+
 	if err := cfg.validate(); err != nil {
 		return Config{}, err
 	}
@@ -150,6 +158,34 @@ func envInt(key string, fallback int) (int, error) {
 	value, err := strconv.Atoi(raw)
 	if err != nil {
 		return 0, fmt.Errorf("%s must be an integer: got %q", key, raw)
+	}
+
+	return value, nil
+}
+
+func envInt64(key string, fallback int64) (int64, error) {
+	raw := strings.TrimSpace(os.Getenv(key))
+	if raw == "" {
+		return fallback, nil
+	}
+
+	value, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("%s must be an integer: got %q", key, raw)
+	}
+
+	return value, nil
+}
+
+func envUint64(key string, fallback uint64) (uint64, error) {
+	raw := strings.TrimSpace(os.Getenv(key))
+	if raw == "" {
+		return fallback, nil
+	}
+
+	value, err := strconv.ParseUint(raw, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("%s must be a non-negative integer: got %q", key, raw)
 	}
 
 	return value, nil
