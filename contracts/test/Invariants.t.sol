@@ -335,12 +335,12 @@ contract InvariantsTest is BaseTest {
         assertGe(pool.borrowIndex(), 1e18);
     }
 
-    function invariant_borrow_index_leads_supply_index_while_solvent() public view {
-        if (pool.totalBorrowed() > pool.totalSupplied()) {
-            return;
-        }
+    function invariant_debt_and_cash_cover_every_claim() public view {
+        uint256 assets = usdc.balanceOf(address(pool)) + pool.totalBorrowed();
+        uint256 claims = pool.totalSupplied() + pool.accruedReserves();
+        uint256 tolerance = actors.length + 4;
 
-        assertGe(pool.borrowIndex(), pool.supplyIndex());
+        assertGe(assets + tolerance, claims);
     }
 
     function invariant_healthy_positions_are_never_liquidatable() public view {
