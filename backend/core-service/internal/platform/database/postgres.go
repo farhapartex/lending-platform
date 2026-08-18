@@ -34,6 +34,7 @@ func Open(opts Options) (*gorm.DB, error) {
 			SingularTable: false,
 		},
 		DisableAutomaticPing: false,
+		TranslateError:       true,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("database: open failed: %w", err)

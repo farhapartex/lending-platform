@@ -205,3 +205,45 @@ func TestEqual(t *testing.T) {
 		})
 	}
 }
+
+func TestNormalizeWithChecksum(t *testing.T) {
+	cases := []struct {
+		name  string
+		input string
+	}{
+		{name: "from lowercase", input: lowercase},
+		{name: "from uppercase", input: uppercase},
+		{name: "from checksum", input: checksum},
+		{name: "with whitespace", input: "  " + checksum + " "},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			normalized, checksummed, err := ethaddr.NormalizeWithChecksum(testCase.input)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if normalized != lowercase {
+				t.Fatalf("expected %q, got %q", lowercase, normalized)
+			}
+
+			if checksummed != checksum {
+				t.Fatalf("expected %q, got %q", checksum, checksummed)
+			}
+		})
+	}
+}
+
+func TestNormalizeWithChecksumRejectsBadInput(t *testing.T) {
+	for _, input := range []string{"", "0x", "nonsense", lowercase[:41]} {
+		normalized, checksummed, err := ethaddr.NormalizeWithChecksum(input)
+		if err == nil {
+			t.Fatalf("expected an error for %q", input)
+		}
+
+		if normalized != "" || checksummed != "" {
+			t.Fatalf("expected empty results on error, got %q and %q", normalized, checksummed)
+		}
+	}
+}

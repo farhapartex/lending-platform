@@ -56,6 +56,15 @@ func NormalizeNonZero(raw string) (string, error) {
 	return normalized, nil
 }
 
+func NormalizeWithChecksum(raw string) (normalized string, checksum string, err error) {
+	normalized, err = Normalize(raw)
+	if err != nil {
+		return "", "", err
+	}
+
+	return normalized, common.HexToAddress(normalized).Hex(), nil
+}
+
 func Checksum(raw string) (string, error) {
 	normalized, err := Normalize(raw)
 	if err != nil {
