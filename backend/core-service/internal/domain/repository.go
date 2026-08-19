@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"time"
+
+	"github.com/farhapartex/lending-platform/core-service/pkg/cursor"
 )
 
 var (
@@ -24,6 +26,26 @@ type MarketRepository interface {
 	ByPoolAddress(ctx context.Context, chainID int64, poolAddress string) (Market, error)
 	List(ctx context.Context, chainID int64) ([]Market, error)
 	Upsert(ctx context.Context, market *Market) error
+}
+
+type TransactionQuery struct {
+	UserID int64
+	Kinds  []TransactionKind
+	From   *time.Time
+	To     *time.Time
+	After  cursor.Key
+	Limit  int
+}
+
+type TransactionRepository interface {
+	List(ctx context.Context, query TransactionQuery) ([]UserTransaction, error)
+	ByID(ctx context.Context, userID int64, id int64) (UserTransaction, error)
+	Insert(ctx context.Context, transaction *UserTransaction) error
+}
+
+type UserRepository interface {
+	ByAddress(ctx context.Context, address string) (User, error)
+	EnsureByAddress(ctx context.Context, chainID int64, address string) (User, error)
 }
 
 type MarketSnapshotRepository interface {
