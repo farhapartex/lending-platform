@@ -13,7 +13,7 @@ So the surface is deliberately small — **six endpoints plus a health check.**
 | --- | --- | --- | --- |
 | [`/health`](#get-health) | GET | Container healthcheck, uptime monitoring | **Live** |
 | [`/accounts/{address}/transactions`](#get-accountsaddresstransactions) | GET | `/history` table, filters, pagination | Planned |
-| [`/accounts/{address}/transactions/{transactionId}`](#get-accountsaddresstransactionstransactionid) | GET | `TxDetailDrawer` | Planned |
+| [`/accounts/{address}/transactions/{transactionId}`](#get-accountsaddresstransactionstransactionid) | GET | `TxDetailDrawer` | **Live** |
 | [`/accounts/{address}/activity`](#get-accountsaddressactivity) | GET | Dashboard `RecentActivityList` | Planned |
 | [`/liquidations/eligible`](#get-liquidationseligible) | GET | `LiquidatablePositionsTable` | Planned |
 | [`/liquidations/history`](#get-liquidationshistory) | GET | Past liquidations | Planned |
@@ -167,9 +167,71 @@ and readiness rather than bolting checks onto this one.
 
 ---
 
+## GET /accounts/{address}/transactions/{transactionId}
+
+One transaction in full, for the detail drawer.
+
+| Parameter | In | Notes |
+| --- | --- | --- |
+| `address` | path | `0x` + 40 hex, case-insensitive. Checksummed and lowercase both resolve to the same wallet |
+| `transactionId` | path | A masked `txn_…` id, as returned by the list endpoint |
+
+```bash
+curl -s http://localhost:8080/api/v1/accounts/0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266/transactions/txn_mvtep746x22iqzn52kca
+```
+
+### Response — 200 OK
+
+```json
+{
+  "id": "txn_mvtep746x22iqzn52kca",
+  "kind": "borrow",
+  "amount": { "amount": "5100000000", "decimals": 6, "symbol": "USDC" },
+  "health_factor_after_bps": 12661,
+  "tx_hash": "0x9f2ccafe",
+  "block": 42,
+  "block_time": "2026-08-20T03:20:11Z",
+  "log_index": 3,
+  "status": "confirmed"
+}
+```
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `id` | string | The same masked id that was requested |
+| `kind` | string | `deposit`, `withdraw`, `borrow`, `repay`, `collateral_added`, `collateral_withdrawn`, or `liquidation` |
+| `amount` | object | Base units as a string, plus the asset's `decimals` and `symbol` for formatting |
+| `health_factor_after_bps` | number or null | The borrower's health factor right after this transaction, in basis points. `12661` means 1.2661. Null when the indexer had no health reading for the event |
+| `tx_hash` | string | The on-chain transaction hash |
+| `block` | number | Block number the event was mined in |
+| `block_time` | string | RFC 3339, UTC |
+| `log_index` | number | Position of the event within the transaction. A single transaction can emit several, so `tx_hash` alone does not identify a row |
+| `status` | string | Always `confirmed`. Only indexed events are stored, and the indexer waits for confirmations before writing, so nothing pending or failed can reach this endpoint |
+
+`amount` carries `decimals` and `symbol` so the client never has to look up asset metadata to render a
+figure. If the asset row is missing, `decimals` is `0` and `symbol` is empty rather than the response
+failing — a detail drawer with an unformatted number beats a broken drawer.
+
+### Errors
+
+| Status | Code | Cause |
+| --- | --- | --- |
+| 400 | `BAD_REQUEST` | The id is not a well-formed `txn_…` token — wrong shape, bad tag, or the id of another kind such as `mkt_…`. Rejected before any database work |
+| 400 | `BAD_REQUEST` | The address is not a valid `0x` + 40 hex string |
+| 404 | `NOT_FOUND` | No such transaction, the address has no history at all, or **the transaction belongs to a different wallet** |
+
+**Another wallet's transaction returns 404, not 403.** Guessing a valid id should not confirm that the id
+exists, so a row that is not yours is indistinguishable from a row that does not exist.
+
+**This returns 404 for every real request until the indexer ships.** `user_transactions` has no rows yet.
+The endpoint, the ownership check and the masking are all live and verified against Postgres — there is
+simply nothing to find.
+
+---
+
 # Planned
 
-All six depend on the indexer. Shapes below are the agreed contract.
+All five depend on the indexer. Shapes below are the agreed contract.
 
 ## GET /accounts/{address}/transactions
 
@@ -214,17 +276,6 @@ bridges that by tracking its own pending transactions locally and dropping each 
 appears in a page from this endpoint.
 
 Errors: `400 BAD_REQUEST` for a malformed address or cursor.
-
----
-
-## GET /accounts/{address}/transactions/{transactionId}
-
-One transaction in full, for the detail drawer. Cached ~30s.
-
-Adds to the list item: the resulting health factor, gas used, and — for a liquidation — the collateral
-seized and bonus paid.
-
-Errors: `404 NOT_FOUND` if the transaction does not exist **or does not belong to that address**.
 
 ---
 
@@ -342,3 +393,16 @@ curl -s -H "X-Request-Id: my-trace-id" -D - -o /dev/null \
 
 curl -s http://localhost:8080/api/v1/nope
 ```
+
+The transaction endpoint, with a wallet from the local Anvil node. The first id is well-formed and simply
+has no row behind it yet, the second is not a valid token at all:
+
+```bash
+ADDRESS=0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+
+curl -s http://localhost:8080/api/v1/accounts/$ADDRESS/transactions/txn_mvtep746x22iqzn52kca
+curl -s http://localhost:8080/api/v1/accounts/$ADDRESS/transactions/77
+```
+
+Masked ids are derived from `ID_MASK_SECRET`, so a `txn_…` token minted against one secret is rejected
+against another. The examples here assume the local default.
