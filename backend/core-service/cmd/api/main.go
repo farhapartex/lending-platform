@@ -14,9 +14,13 @@ import (
 	"time"
 
 	"github.com/farhapartex/lending-platform/core-service/internal/config"
+	"github.com/farhapartex/lending-platform/core-service/internal/domain"
+	"github.com/farhapartex/lending-platform/core-service/internal/platform/database"
 	"github.com/farhapartex/lending-platform/core-service/internal/platform/logger"
+	"github.com/farhapartex/lending-platform/core-service/internal/repository"
 	"github.com/farhapartex/lending-platform/core-service/internal/service"
 	transporthttp "github.com/farhapartex/lending-platform/core-service/internal/transport/http"
+	"github.com/farhapartex/lending-platform/core-service/pkg/idmask"
 )
 
 var (
@@ -48,10 +52,26 @@ func run() error {
 		StartedAt:   startedAt,
 	})
 
+	masker, err := idmask.New(cfg.EffectiveIDMaskSecret())
+	if err != nil {
+		return fmt.Errorf("id masking could not be set up: %w", err)
+	}
+
+	transactionService, closeDatabase, err := buildTransactionService(cfg, log)
+	if err != nil {
+		return err
+	}
+
+	if closeDatabase != nil {
+		defer closeDatabase()
+	}
+
 	router := transporthttp.NewRouter(transporthttp.RouterParams{
-		Config:        cfg,
-		Logger:        log,
-		HealthService: healthService,
+		Config:             cfg,
+		Logger:             log,
+		HealthService:      healthService,
+		TransactionService: transactionService,
+		Masker:             masker,
 	})
 
 	server := &http.Server{
@@ -98,4 +118,45 @@ func run() error {
 	log.Info("shutdown complete")
 
 	return nil
+}
+
+func buildTransactionService(
+	cfg config.Config,
+	log *slog.Logger,
+) (domain.TransactionService, func(), error) {
+	if cfg.DatabaseURL == "" {
+		log.Warn("DATABASE_URL is not set, account endpoints will not be served")
+
+		return nil, nil, nil
+	}
+
+	db, err := database.Open(database.Options{
+		DSN:             cfg.DatabaseURL,
+		MaxOpenConns:    cfg.DatabaseMaxOpenConns,
+		MaxIdleConns:    cfg.DatabaseMaxIdleConns,
+		ConnMaxLifetime: cfg.DatabaseConnMaxLifetime,
+		ConnMaxIdleTime: cfg.DatabaseConnMaxIdleTime,
+		LogQueries:      cfg.DatabaseLogQueries,
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("database connection failed: %w", err)
+	}
+
+	closeDatabase := func() {
+		pool, poolErr := db.DB()
+		if poolErr != nil {
+			return
+		}
+
+		if closeErr := pool.Close(); closeErr != nil {
+			log.Error("closing the database failed", slog.String("error", closeErr.Error()))
+		}
+	}
+
+	transactions := service.NewTransactionService(service.TransactionServiceParams{
+		Users:        repository.NewUserRepository(db),
+		Transactions: repository.NewTransactionRepository(db),
+	})
+
+	return transactions, closeDatabase, nil
 }

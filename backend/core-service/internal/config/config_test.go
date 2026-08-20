@@ -275,6 +275,8 @@ func TestIDMaskSecretAcceptedWhenLongEnough(t *testing.T) {
 func TestCacheSettingsDefaults(t *testing.T) {
 	setRequiredChainEnv(t)
 
+	t.Setenv("REDIS_URL", "")
+
 	cfg, err := Load("test")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

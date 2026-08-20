@@ -11,14 +11,17 @@ import (
 	"github.com/farhapartex/lending-platform/core-service/internal/transport/http/dto"
 	"github.com/farhapartex/lending-platform/core-service/internal/transport/http/handler"
 	"github.com/farhapartex/lending-platform/core-service/internal/transport/http/middleware"
+	"github.com/farhapartex/lending-platform/core-service/pkg/idmask"
 )
 
 const APIBasePath = "/api/v1"
 
 type RouterParams struct {
-	Config        config.Config
-	Logger        *slog.Logger
-	HealthService domain.HealthService
+	Config             config.Config
+	Logger             *slog.Logger
+	HealthService      domain.HealthService
+	TransactionService domain.TransactionService
+	Masker             *idmask.Masker
 }
 
 func NewRouter(params RouterParams) *gin.Engine {
@@ -57,5 +60,20 @@ func NewRouter(params RouterParams) *gin.Engine {
 	v1 := engine.Group(APIBasePath)
 	v1.GET("/health", healthHandler.Get)
 
+	registerAccountRoutes(v1, params)
+
 	return engine
+}
+
+func registerAccountRoutes(group *gin.RouterGroup, params RouterParams) {
+	if params.TransactionService == nil || params.Masker == nil {
+		return
+	}
+
+	accounts := handler.NewAccountHandler(handler.AccountHandlerParams{
+		Transactions: params.TransactionService,
+		Masker:       params.Masker,
+	})
+
+	group.GET("/accounts/:address/transactions/:transactionId", accounts.GetTransaction)
 }
