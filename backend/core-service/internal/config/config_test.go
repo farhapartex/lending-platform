@@ -374,3 +374,90 @@ func TestEnvHelpersFallBackOnBlankValues(t *testing.T) {
 		t.Fatalf("expected fallback 1m, got %s with error %v", valueDuration, err)
 	}
 }
+
+func TestCORSOriginsDefaultToTheLocalWebApp(t *testing.T) {
+	setRequiredChainEnv(t)
+
+	cfg, err := Load("test")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(cfg.CORSAllowedOrigins) != 1 || cfg.CORSAllowedOrigins[0] != localWebOrigin {
+		t.Fatalf("expected the local dev server to be allowed by default, got %v", cfg.CORSAllowedOrigins)
+	}
+}
+
+func TestCORSOriginsDefaultToNothingOutsideLocal(t *testing.T) {
+	for _, appEnv := range []string{EnvStaging, EnvProduction} {
+		setRequiredChainEnv(t)
+		t.Setenv("APP_ENV", appEnv)
+		t.Setenv("ID_MASK_SECRET", "a-secret-that-is-long-enough-to-pass")
+
+		cfg, err := Load("test")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if len(cfg.CORSAllowedOrigins) != 0 {
+			t.Fatalf("expected no implicit origins in %s, got %v", appEnv, cfg.CORSAllowedOrigins)
+		}
+	}
+}
+
+func TestCORSOriginsAreReadAsAList(t *testing.T) {
+	setRequiredChainEnv(t)
+	t.Setenv("CORS_ALLOWED_ORIGINS", " http://localhost:5173 , https://app.example.com ,, ")
+
+	cfg, err := Load("test")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	want := []string{"http://localhost:5173", "https://app.example.com"}
+
+	if len(cfg.CORSAllowedOrigins) != len(want) {
+		t.Fatalf("expected %v, got %v", want, cfg.CORSAllowedOrigins)
+	}
+
+	for index, origin := range want {
+		if cfg.CORSAllowedOrigins[index] != origin {
+			t.Fatalf("expected %v, got %v", want, cfg.CORSAllowedOrigins)
+		}
+	}
+}
+
+func TestCORSOriginsRejectAMalformedEntry(t *testing.T) {
+	cases := map[string]string{
+		"no scheme":      "localhost:5173",
+		"trailing slash": "http://localhost:5173/",
+		"ftp scheme":     "ftp://localhost:5173",
+	}
+
+	for name, origin := range cases {
+		t.Run(name, func(t *testing.T) {
+			setRequiredChainEnv(t)
+			t.Setenv("CORS_ALLOWED_ORIGINS", origin)
+
+			if _, err := Load("test"); err == nil {
+				t.Fatalf("expected %q to be refused", origin)
+			}
+		})
+	}
+}
+
+func TestCORSWildcardIsAllowedLocallyButNotInProduction(t *testing.T) {
+	setRequiredChainEnv(t)
+	t.Setenv("CORS_ALLOWED_ORIGINS", "*")
+
+	if _, err := Load("test"); err != nil {
+		t.Fatalf("expected a wildcard to be accepted locally: %v", err)
+	}
+
+	t.Setenv("APP_ENV", EnvProduction)
+	t.Setenv("ID_MASK_SECRET", "a-secret-that-is-long-enough-to-pass")
+
+	if _, err := Load("test"); err == nil {
+		t.Fatal("expected a wildcard to be refused in production")
+	}
+}

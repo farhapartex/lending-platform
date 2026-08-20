@@ -15,6 +15,8 @@ const (
 
 	localIDMaskSecret     = "local-development-id-mask-secret"
 	minIDMaskSecretLength = 32
+
+	localWebOrigin = "http://localhost:5173"
 )
 
 func (c Config) EffectiveIDMaskSecret() string {
@@ -48,6 +50,8 @@ type Config struct {
 	RedisURL            string
 	CacheNamespace      string
 	CacheRequestTimeout time.Duration
+
+	CORSAllowedOrigins []string
 
 	Chain ChainConfig
 }
@@ -120,6 +124,8 @@ func Load(serviceVersion string) (Config, error) {
 	}
 	cfg.CacheRequestTimeout = cacheTimeout
 
+	cfg.CORSAllowedOrigins = envList("CORS_ALLOWED_ORIGINS", defaultCORSOrigins(cfg.AppEnv))
+
 	chain, err := loadChain()
 	if err != nil {
 		return Config{}, err
@@ -169,11 +175,45 @@ func (c Config) validate() error {
 		return err
 	}
 
+	if err := c.validateCORSOrigins(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c Config) validateCORSOrigins() error {
+	for _, origin := range c.CORSAllowedOrigins {
+		if origin == "*" {
+			if c.AppEnv == EnvProduction {
+				return fmt.Errorf("CORS_ALLOWED_ORIGINS must not be * in production")
+			}
+
+			continue
+		}
+
+		if !strings.HasPrefix(origin, "http://") && !strings.HasPrefix(origin, "https://") {
+			return fmt.Errorf("CORS_ALLOWED_ORIGINS entries must start with http:// or https://: got %q", origin)
+		}
+
+		if strings.HasSuffix(origin, "/") {
+			return fmt.Errorf("CORS_ALLOWED_ORIGINS entries must not end with a slash: got %q", origin)
+		}
+	}
+
 	return nil
 }
 
 func (c Config) CacheEnabled() bool {
 	return c.RedisURL != ""
+}
+
+func defaultCORSOrigins(appEnv string) []string {
+	if appEnv == EnvLocal {
+		return []string{localWebOrigin}
+	}
+
+	return nil
 }
 
 func (c Config) validateIDMaskSecret() error {
@@ -197,6 +237,23 @@ func env(key, fallback string) string {
 	}
 
 	return fallback
+}
+
+func envList(key string, fallback []string) []string {
+	raw := strings.TrimSpace(os.Getenv(key))
+	if raw == "" {
+		return fallback
+	}
+
+	values := make([]string, 0, strings.Count(raw, ",")+1)
+
+	for _, part := range strings.Split(raw, ",") {
+		if trimmed := strings.TrimSpace(part); trimmed != "" {
+			values = append(values, trimmed)
+		}
+	}
+
+	return values
 }
 
 func envInt(key string, fallback int) (int, error) {

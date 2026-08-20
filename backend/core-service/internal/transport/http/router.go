@@ -37,6 +37,7 @@ func NewRouter(params RouterParams) *gin.Engine {
 
 	engine.Use(
 		middleware.RequestID(),
+		middleware.CORS(params.Config.CORSAllowedOrigins),
 		middleware.Logger(params.Logger),
 		middleware.Recovery(params.Logger),
 	)
