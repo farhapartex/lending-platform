@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"time"
 
 	"github.com/farhapartex/lending-platform/core-service/pkg/bigmath"
@@ -41,4 +42,8 @@ type UserTransaction struct {
 
 func (UserTransaction) TableName() string {
 	return "user_transactions"
+}
+
+type TransactionService interface {
+	ByID(ctx context.Context, address string, id int64) (UserTransaction, error)
 }
