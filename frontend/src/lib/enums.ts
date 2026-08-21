@@ -371,3 +371,12 @@ export enum IconName {
   ChevronDown = "chevronDown",
   Sparkles = "sparkles",
 }
+
+export enum ApiErrorCode {
+  BadRequest = "BAD_REQUEST",
+  NotFound = "NOT_FOUND",
+  InternalError = "INTERNAL_ERROR",
+  Unreachable = "UNREACHABLE",
+  Timeout = "TIMEOUT",
+  MalformedResponse = "MALFORMED_RESPONSE",
+}
