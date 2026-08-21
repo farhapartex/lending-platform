@@ -9,6 +9,7 @@ import {
   type TypeFilterValue,
 } from "@/lib/enums";
 import { historyAsOf, historyEntries, historyPageContent, historyPageSize, type HistoryEntry } from "@/content/history";
+import { useWalletState } from "@/hooks/useWalletState";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DateRangeFilter } from "@/components/history/DateRangeFilter";
@@ -42,6 +43,7 @@ function withinRange(entry: HistoryEntry, preset: DateRangePreset): boolean {
 }
 
 export function HistoryPanel() {
+  const { address } = useWalletState();
   const [typeFilter, setTypeFilter] = useState<TypeFilterValue>(allTypesFilter);
   const [rangeFilter, setRangeFilter] = useState(DateRangePreset.AllTime);
   const [page, setPage] = useState(1);
@@ -117,7 +119,7 @@ export function HistoryPanel() {
         />
       )}
 
-      <TxDetailDrawer entry={selected} onClose={() => setSelected(null)} />
+      <TxDetailDrawer entry={selected} address={address} onClose={() => setSelected(null)} />
     </div>
   );
 }

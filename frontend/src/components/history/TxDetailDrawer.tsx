@@ -1,53 +1,67 @@
 "use client";
 
-import { formatDateTimeUtc, truncateMiddle } from "@/lib/format";
-import { formatHealthFactor } from "@/lib/health";
-import { formatTokenAmount } from "@/lib/token";
+import { BadgeTone, ButtonSize, ButtonVariant, IconName } from "@/lib/enums";
+import { isNotFound } from "@/lib/api/errors";
 import { explorerTxBaseUrl } from "@/content/protocol";
 import { historyPageContent, type HistoryEntry } from "@/content/history";
+import { useTransactionDetail } from "@/hooks/useTransactionDetail";
+import { Alert } from "@/components/ui/Alert";
+import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
 import { ExternalLink } from "@/components/ui/ExternalLink";
 import { MetricRow } from "@/components/ui/MetricRow";
 import { TxTypeBadge } from "@/components/tx/TxTypeBadge";
+import { transactionDetailRows } from "@/components/history/txDetailPresentation";
 
 type TxDetailDrawerProps = {
   entry: HistoryEntry | null;
+  address?: string;
   onClose: () => void;
 };
 
-export function TxDetailDrawer({ entry, onClose }: TxDetailDrawerProps) {
+export function TxDetailDrawer({ entry, address, onClose }: TxDetailDrawerProps) {
+  const { detail, isLoading, isError, error, isEnabled, refetch } = useTransactionDetail(address, entry?.id ?? null);
+
   if (entry === null) {
     return null;
   }
 
-  const rows = [
-    {
-      label: "Amount",
-      value: `${formatTokenAmount(entry.amount, entry.decimals, 6)} ${entry.symbol}`,
-    },
-    {
-      label: "Health factor afterwards",
-      value: entry.healthFactorAfterBps === null ? "Not applicable" : formatHealthFactor(entry.healthFactorAfterBps),
-      hint: entry.healthFactorAfterBps === null ? historyPageContent.healthNotApplicable : undefined,
-    },
-    {
-      label: "When",
-      value: formatDateTimeUtc(entry.timestamp),
-    },
-    {
-      label: "Block",
-      value: entry.blockNumber.toLocaleString("en-US"),
-    },
-    {
-      label: "Transaction",
-      value: truncateMiddle(entry.txHash, 10, 8),
-    },
-  ];
+  const view = detail ?? entry;
+  const rows = transactionDetailRows(view);
+  const missing = isError && isNotFound(error);
 
   return (
     <Drawer open onClose={onClose} title="Transaction details">
       <div className="flex flex-col gap-5">
-        <TxTypeBadge kind={entry.kind} />
+        <TxTypeBadge kind={view.kind} />
+
+        {isLoading && detail === undefined ? (
+          <p className="flex items-center gap-2 text-sm text-ink-soft">
+            <span className="size-1.5 animate-pulse rounded-full bg-brand-ink" />
+            {historyPageContent.detailRefreshing}
+          </p>
+        ) : null}
+
+        {missing ? (
+          <Alert title={historyPageContent.detailMissingTitle} tone={BadgeTone.Caution} icon={IconName.Info}>
+            {historyPageContent.detailMissingDescription}
+          </Alert>
+        ) : null}
+
+        {isError && !missing ? (
+          <Alert title={historyPageContent.detailUnavailableTitle} tone={BadgeTone.Neutral} icon={IconName.Info}>
+            <div className="flex flex-col items-start gap-2">
+              <p>{historyPageContent.detailUnavailableDescription}</p>
+              <Button variant={ButtonVariant.Subtle} size={ButtonSize.Sm} onClick={refetch}>
+                {historyPageContent.retry}
+              </Button>
+            </div>
+          </Alert>
+        ) : null}
+
+        {!isEnabled ? (
+          <p className="text-sm text-ink-faint">{historyPageContent.detailSampleNotice}</p>
+        ) : null}
 
         <dl className="divide-y divide-line rounded-card border border-line bg-surface px-5">
           {rows.map((row) => (
@@ -55,7 +69,7 @@ export function TxDetailDrawer({ entry, onClose }: TxDetailDrawerProps) {
           ))}
         </dl>
 
-        <ExternalLink href={`${explorerTxBaseUrl}${entry.txHash}`}>View on the block explorer</ExternalLink>
+        <ExternalLink href={`${explorerTxBaseUrl}${view.txHash}`}>View on the block explorer</ExternalLink>
       </div>
     </Drawer>
   );

@@ -201,4 +201,14 @@ export const historyPageContent = {
   unavailableDescription:
     "History is rebuilt from indexed contract events, and that service is unreachable right now. Your funds and positions are unaffected.",
   healthNotApplicable: "Lending actions do not affect a health factor, so none is recorded.",
+  logIndexHint: "One transaction can emit several events, so this marks which event in that transaction you are looking at.",
+  detailUnavailableTitle: "Showing the summary only",
+  detailUnavailableDescription:
+    "We could not load the full record for this transaction. The figures below come from the list you clicked, and they are still accurate.",
+  detailMissingTitle: "This transaction is no longer on record",
+  detailMissingDescription:
+    "It may belong to a different wallet, or the indexed history may have been rebuilt. Nothing about your position has changed.",
+  detailRefreshing: "Checking for the latest record",
+  detailSampleNotice: "This is sample data. Live records will appear once transaction history is being indexed.",
+  retry: "Try again",
 } as const;
