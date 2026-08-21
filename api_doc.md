@@ -47,6 +47,20 @@ preferences). Those endpoints are deliberately absent until Phase 2 adds signatu
 | `X-Request-Id` | response | Always present. Quote it when reporting a problem |
 | `Content-Type` | response | `application/json; charset=utf-8` |
 
+### Browser origins
+
+The API is called directly from the browser, so it carries an origin allowlist. `CORS_ALLOWED_ORIGINS` is a
+comma-separated list and defaults to `http://localhost:5173` locally and to nothing at all elsewhere — a
+deployed environment must name its own origin. A `*` is accepted locally and refused in production.
+
+An allowed origin gets `Access-Control-Allow-Origin` on **every** response including errors, which matters:
+without it the browser blocks the body and a clean `404` looks like a network failure. `X-Request-Id` is
+listed in `Access-Control-Expose-Headers` so client code can read it. Credentials are never allowed —
+Phase 1 sends no cookies and no auth headers.
+
+An origin that is not on the list still gets served, just without the CORS headers, so the browser is the
+thing that blocks it. Preflights from an unknown origin are refused with `403`.
+
 ### Amounts are strings, never JSON numbers
 
 A token amount is a `uint256`. It does not fit in a JSON number, and JavaScript would silently round it.
