@@ -4,6 +4,8 @@ import (
 	"time"
 )
 
+const IndexerStreamProtocolEvents = "protocol_events"
+
 type IndexerCheckpoint struct {
 	ID                     int64     `gorm:"column:id;primaryKey;autoIncrement"`
 	StreamName             string    `gorm:"column:stream_name;not null"`

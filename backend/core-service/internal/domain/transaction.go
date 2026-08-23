@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/farhapartex/lending-platform/core-service/pkg/bigmath"
+	"github.com/farhapartex/lending-platform/core-service/pkg/cursor"
 )
 
 type TransactionKind string
@@ -44,6 +45,47 @@ func (UserTransaction) TableName() string {
 	return "user_transactions"
 }
 
+var AllTransactionKinds = []TransactionKind{
+	TransactionKindDeposit,
+	TransactionKindWithdraw,
+	TransactionKindBorrow,
+	TransactionKindRepay,
+	TransactionKindCollateralAdded,
+	TransactionKindCollateralWithdrawn,
+	TransactionKindLiquidation,
+}
+
+func ParseTransactionKind(raw string) (TransactionKind, bool) {
+	for _, kind := range AllTransactionKinds {
+		if string(kind) == raw {
+			return kind, true
+		}
+	}
+
+	return "", false
+}
+
+type TransactionListRequest struct {
+	Address string
+	Kinds   []TransactionKind
+	From    *time.Time
+	To      *time.Time
+	After   cursor.Key
+	Limit   int
+}
+
+type TransactionPage struct {
+	Items      []UserTransaction
+	NextCursor cursor.Key
+	AsOf       IndexedAt
+}
+
+type IndexedAt struct {
+	Block *int64
+	Time  time.Time
+}
+
 type TransactionService interface {
 	ByID(ctx context.Context, address string, id int64) (UserTransaction, error)
+	List(ctx context.Context, request TransactionListRequest) (TransactionPage, error)
 }

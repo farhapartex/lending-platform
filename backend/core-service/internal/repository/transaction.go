@@ -10,7 +10,7 @@ import (
 
 const (
 	defaultTransactionLimit = 25
-	maxTransactionLimit     = 100
+	maxTransactionLimit     = 200
 )
 
 type transactionRepository struct {

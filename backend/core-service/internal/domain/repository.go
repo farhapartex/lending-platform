@@ -43,6 +43,10 @@ type TransactionRepository interface {
 	Insert(ctx context.Context, transaction *UserTransaction) error
 }
 
+type CheckpointRepository interface {
+	ByStream(ctx context.Context, stream string) (IndexerCheckpoint, error)
+}
+
 type UserRepository interface {
 	ByAddress(ctx context.Context, address string) (User, error)
 	EnsureByAddress(ctx context.Context, chainID int64, address string) (User, error)
