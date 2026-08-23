@@ -44,14 +44,32 @@ func (s *stubUsers) EnsureByAddress(context.Context, int64, string) (domain.User
 
 type stubTransactions struct {
 	byKey        map[int64]domain.UserTransaction
+	page         []domain.UserTransaction
 	failWith     error
+	listFailWith error
 	lastUserID   int64
 	lastID       int64
+	lastQuery    domain.TransactionQuery
 	requestCount int
+	listCount    int
 }
 
-func (s *stubTransactions) List(context.Context, domain.TransactionQuery) ([]domain.UserTransaction, error) {
-	return nil, errors.New("not expected in these tests")
+func (s *stubTransactions) List(
+	_ context.Context,
+	query domain.TransactionQuery,
+) ([]domain.UserTransaction, error) {
+	s.lastQuery = query
+	s.listCount++
+
+	if s.listFailWith != nil {
+		return nil, s.listFailWith
+	}
+
+	if query.Limit > 0 && len(s.page) > query.Limit {
+		return s.page[:query.Limit], nil
+	}
+
+	return s.page, nil
 }
 
 func (s *stubTransactions) ByID(_ context.Context, userID int64, id int64) (domain.UserTransaction, error) {
@@ -73,6 +91,24 @@ func (s *stubTransactions) ByID(_ context.Context, userID int64, id int64) (doma
 
 func (s *stubTransactions) Insert(context.Context, *domain.UserTransaction) error {
 	return errors.New("not expected in these tests")
+}
+
+type stubCheckpoints struct {
+	checkpoint   domain.IndexerCheckpoint
+	failWith     error
+	requestCount int
+	lastStream   string
+}
+
+func (s *stubCheckpoints) ByStream(_ context.Context, stream string) (domain.IndexerCheckpoint, error) {
+	s.lastStream = stream
+	s.requestCount++
+
+	if s.failWith != nil {
+		return domain.IndexerCheckpoint{}, s.failWith
+	}
+
+	return s.checkpoint, nil
 }
 
 func newService(users *stubUsers, transactions *stubTransactions) domain.TransactionService {
