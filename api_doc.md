@@ -12,7 +12,7 @@ So the surface is deliberately small — **six endpoints plus a health check.**
 | Endpoint | Method | Serves | Status |
 | --- | --- | --- | --- |
 | [`/health`](#get-health) | GET | Container healthcheck, uptime monitoring | **Live** |
-| [`/accounts/{address}/transactions`](#get-accountsaddresstransactions) | GET | `/history` table, filters, pagination | Planned |
+| [`/accounts/{address}/transactions`](#get-accountsaddresstransactions) | GET | `/history` table, filters, pagination | **Live** |
 | [`/accounts/{address}/transactions/{transactionId}`](#get-accountsaddresstransactionstransactionid) | GET | `TxDetailDrawer` | **Live** |
 | [`/accounts/{address}/activity`](#get-accountsaddressactivity) | GET | Dashboard `RecentActivityList` | Planned |
 | [`/liquidations/eligible`](#get-liquidationseligible) | GET | `LiquidatablePositionsTable` | Planned |
@@ -181,6 +181,94 @@ and readiness rather than bolting checks onto this one.
 
 ---
 
+## GET /accounts/{address}/transactions
+
+The `/history` table. Ordered newest first.
+
+| Parameter | In | Default | Notes |
+| --- | --- | --- | --- |
+| `address` | path | — | `0x` + 40 hex, case-insensitive. Send lowercase to keep client cache keys stable |
+| `kind` | query | all | One or more of `deposit`, `withdraw`, `borrow`, `repay`, `collateral_added`, `collateral_withdrawn`, `liquidation`. Repeat the parameter or comma-separate; duplicates are ignored |
+| `from`, `to` | query | — | RFC 3339 bounds, inclusive. Send UTC — a date picker's local midnight is not UTC midnight |
+| `cursor` | query | — | An opaque `next_cursor` from a previous response. Never build one |
+| `limit` | query | 25 | Capped at 100. `0` or absent means the default |
+
+```bash
+ADDRESS=0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+BASE=http://localhost:8080/api/v1/accounts/$ADDRESS/transactions
+
+curl -s "$BASE?limit=3"
+curl -s "$BASE?kind=borrow,repay"
+curl -s "$BASE?from=2026-08-22T07:00:00Z&to=2026-08-22T09:00:00Z"
+```
+
+### Response — 200 OK
+
+```json
+{
+  "items": [
+    {
+      "id": "txn_mvtep746x22iqzn52kca",
+      "kind": "borrow",
+      "amount": { "amount": "2000000", "decimals": 6, "symbol": "USDC" },
+      "health_factor_after_bps": 12002,
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000002",
+      "block": 42,
+      "block_time": "2026-08-22T07:00:00Z",
+      "log_index": 2,
+      "status": "confirmed"
+    }
+  ],
+  "next_cursor": "djEuMTc4NzM3ODQwMDAwMDAwMC4z",
+  "as_of": { "block": 4218, "time": "2026-08-22T09:30:00Z" }
+}
+```
+
+Each item has exactly the same shape as the detail endpoint below, so one client type covers both.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `items` | array | Always an array, never `null`, so a client can render without a null check |
+| `next_cursor` | string or null | Pass it back as `cursor` for the next page. **Null means there is genuinely nothing more** |
+| `as_of.block` | number or null | The last block the indexer has processed. Null until the indexer has run at all — it is never invented from the rows returned |
+| `as_of.time` | string | When the indexer last advanced, not when you asked. A timestamp drifting into the past is how you spot a stalled indexer |
+
+### Paging
+
+Keyset paging on `(block_time, id)`, not offsets — a new transaction arriving mid-scroll cannot shift rows
+onto a page you already read.
+
+**A null `next_cursor` is trustworthy.** The query fetches one row beyond the page and drops it, so a
+cursor is only ever returned when a further row really exists. A final page that happens to be exactly
+`limit` rows long returns `null`, not a cursor leading to an empty page.
+
+A cursor carries only a position, never an identity, and every query is scoped to the wallet in the path.
+Replaying one wallet's cursor against another wallet's URL returns that wallet's own rows — it cannot leak
+anything.
+
+### Errors
+
+| Status | Code | Cause |
+| --- | --- | --- |
+| 400 | `BAD_REQUEST` | A malformed address, an unknown `kind`, a `from`/`to` that is not RFC 3339, a negative or non-numeric `limit`, or a `cursor` that did not come from us. The message names the offending parameter |
+| 400 | `BAD_REQUEST` | `from` is later than `to` |
+
+**An unknown address returns 200 with an empty list, not 404.** Every address is valid on a blockchain
+whether or not it has ever transacted, so "no history" is an empty result rather than a missing resource.
+The `as_of` block is still reported, so the client can tell "nothing happened" from "nothing indexed yet".
+
+A `limit` above 100 is silently capped rather than refused — asking for too much is not a client error.
+
+**There is a lag between a user signing and this endpoint knowing.** The indexer waits for confirmations
+and then polls, so a transaction is visible on-chain for roughly 10–30 seconds before it appears here. The
+UI bridges that by tracking its own pending transactions locally and dropping each one when its `tx_hash`
+appears in a page from this endpoint.
+
+**This returns an empty list for every wallet until the indexer ships.** `user_transactions` has no rows
+yet.
+
+---
+
 ## GET /accounts/{address}/transactions/{transactionId}
 
 One transaction in full, for the detail drawer.
@@ -245,53 +333,7 @@ simply nothing to find.
 
 # Planned
 
-All five depend on the indexer. Shapes below are the agreed contract.
-
-## GET /accounts/{address}/transactions
-
-The `/history` table. Cached ~5s.
-
-| Parameter | In | Default | Notes |
-| --- | --- | --- | --- |
-| `address` | path | — | `0x` + 40 hex, case-insensitive. Send lowercase to keep cache keys stable |
-| `kind` | query | all | `deposit`, `withdraw`, `borrow`, `repay`, `collateral_added`, `collateral_withdrawn`, `liquidation` |
-| `from`, `to` | query | — | RFC 3339 bounds. Send UTC — a date picker's local midnight is not UTC midnight |
-| `cursor` | query | — | From a previous `next_cursor` |
-| `limit` | query | 25 | Capped at 100 |
-
-### Response — 200 OK
-
-```json
-{
-  "items": [
-    {
-      "id": "txn_mvtep746x22iqzn52kca",
-      "kind": "borrow",
-      "amount": { "amount": "5100000000", "decimals": 6, "symbol": "USDC" },
-      "tx_hash": "0x9f2c…",
-      "block": 42,
-      "block_time": "2026-08-19T03:20:11Z",
-      "status": "confirmed"
-    }
-  ],
-  "next_cursor": "b3BhcXVl",
-  "as_of": { "block": 45, "time": "2026-08-19T03:25:46Z" }
-}
-```
-
-Ordered newest first.
-
-**An unknown address returns 200 with an empty list, not 404.** Every address is valid on a blockchain
-whether or not it has ever transacted, so "no history" is an empty result, not a missing resource.
-
-**There is a lag between a user signing and this endpoint knowing.** The indexer waits for confirmations and
-then polls, so a transaction is visible on-chain for roughly 10–30 seconds before it appears here. The UI
-bridges that by tracking its own pending transactions locally and dropping each one when its `tx_hash`
-appears in a page from this endpoint.
-
-Errors: `400 BAD_REQUEST` for a malformed address or cursor.
-
----
+All four depend on the indexer. Shapes below are the agreed contract.
 
 ## GET /accounts/{address}/activity
 
@@ -414,6 +456,8 @@ has no row behind it yet, the second is not a valid token at all:
 ```bash
 ADDRESS=0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
 
+curl -s http://localhost:8080/api/v1/accounts/$ADDRESS/transactions
+curl -s "http://localhost:8080/api/v1/accounts/$ADDRESS/transactions?kind=borrow&limit=5"
 curl -s http://localhost:8080/api/v1/accounts/$ADDRESS/transactions/txn_mvtep746x22iqzn52kca
 curl -s http://localhost:8080/api/v1/accounts/$ADDRESS/transactions/77
 ```
