@@ -14,7 +14,7 @@ So the surface is deliberately small — **six endpoints plus a health check.**
 | [`/health`](#get-health) | GET | Container healthcheck, uptime monitoring | **Live** |
 | [`/accounts/{address}/transactions`](#get-accountsaddresstransactions) | GET | `/history` table, filters, pagination | **Live** |
 | [`/accounts/{address}/transactions/{transactionId}`](#get-accountsaddresstransactionstransactionid) | GET | `TxDetailDrawer` | **Live** |
-| [`/accounts/{address}/activity`](#get-accountsaddressactivity) | GET | Dashboard `RecentActivityList` | Planned |
+| [`/accounts/{address}/activity`](#get-accountsaddressactivity) | GET | Dashboard `RecentActivityList` | **Live** |
 | [`/liquidations/eligible`](#get-liquidationseligible) | GET | `LiquidatablePositionsTable` | Planned |
 | [`/liquidations/history`](#get-liquidationshistory) | GET | Past liquidations | Planned |
 | [`/liquidations/{liquidationId}`](#get-liquidationsliquidationid) | GET | `LiquidationReceipt` | Planned |
@@ -331,19 +331,72 @@ simply nothing to find.
 
 ---
 
-# Planned
-
-All four depend on the indexer. Shapes below are the agreed contract.
-
 ## GET /accounts/{address}/activity
 
-The dashboard's short recent-activity list. Same item shape as `/transactions`, no cursor. Cached ~5s.
+The dashboard's short recent-activity list. Newest first, no filters, no paging.
 
 | Parameter | In | Default | Notes |
 | --- | --- | --- | --- |
-| `limit` | query | 5 | Capped at 20 |
+| `address` | path | — | `0x` + 40 hex, case-insensitive |
+| `limit` | query | 5 | Capped at 20. `0` or absent means the default |
+
+```bash
+ADDRESS=0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+
+curl -s http://localhost:8080/api/v1/accounts/$ADDRESS/activity
+curl -s "http://localhost:8080/api/v1/accounts/$ADDRESS/activity?limit=10"
+```
+
+### Response — 200 OK
+
+```json
+{
+  "items": [
+    {
+      "id": "txn_buckzju36csnq4qecunq",
+      "kind": "borrow",
+      "amount": { "amount": "1000000", "decimals": 6, "symbol": "USDC" },
+      "health_factor_after_bps": 12001,
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "block": 41,
+      "block_time": "2026-08-22T08:00:00Z",
+      "log_index": 1,
+      "status": "confirmed"
+    }
+  ],
+  "as_of": { "block": 4218, "time": "2026-08-22T09:30:00Z" }
+}
+```
+
+**Items are byte-for-byte the same shape as `/transactions`**, so one client type covers both — they are
+built by the same code path, and a test pins them together.
+
+**There is no `next_cursor` field at all**, not even a null one. This endpoint does not page: a dashboard
+panel that showed a "load more" button would be a different feature. Use `/transactions` for anything
+scrollable.
+
+`as_of` behaves exactly as on `/transactions`: the block is the indexer's last processed block, `null` until
+the indexer has run, and never inferred from the rows returned.
+
+### Errors
+
+| Status | Code | Cause |
+| --- | --- | --- |
+| 400 | `BAD_REQUEST` | A malformed address, or a `limit` that is not a non-negative whole number |
+
+**An unknown address returns 200 with an empty list**, with `as_of` still populated — so the dashboard can
+tell "this wallet has done nothing" from "nothing has been indexed yet". Those need different empty states.
+
+`kind`, `from`, `to` and `cursor` are **ignored rather than refused** here. They are not part of this
+endpoint, and rejecting an unknown query parameter would make a harmless client mistake look like a failure.
+
+A `limit` above 20 is silently capped.
 
 ---
+
+# Planned
+
+All three depend on the indexer. Shapes below are the agreed contract.
 
 ## GET /liquidations/eligible
 
@@ -458,6 +511,7 @@ ADDRESS=0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
 
 curl -s http://localhost:8080/api/v1/accounts/$ADDRESS/transactions
 curl -s "http://localhost:8080/api/v1/accounts/$ADDRESS/transactions?kind=borrow&limit=5"
+curl -s http://localhost:8080/api/v1/accounts/$ADDRESS/activity
 curl -s http://localhost:8080/api/v1/accounts/$ADDRESS/transactions/txn_mvtep746x22iqzn52kca
 curl -s http://localhost:8080/api/v1/accounts/$ADDRESS/transactions/77
 ```
