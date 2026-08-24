@@ -21,11 +21,29 @@ import (
 const testAddress = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 type stubTransactionService struct {
-	transaction domain.UserTransaction
-	failWith    error
-	lastAddress string
-	lastID      int64
-	callCount   int
+	transaction  domain.UserTransaction
+	page         domain.TransactionPage
+	failWith     error
+	listFailWith error
+	lastAddress  string
+	lastID       int64
+	lastRequest  domain.TransactionListRequest
+	callCount    int
+	listCount    int
+}
+
+func (s *stubTransactionService) List(
+	_ context.Context,
+	request domain.TransactionListRequest,
+) (domain.TransactionPage, error) {
+	s.lastRequest = request
+	s.listCount++
+
+	if s.listFailWith != nil {
+		return domain.TransactionPage{}, s.listFailWith
+	}
+
+	return s.page, nil
 }
 
 func (s *stubTransactionService) ByID(

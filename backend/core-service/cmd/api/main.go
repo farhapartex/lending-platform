@@ -156,6 +156,7 @@ func buildTransactionService(
 	transactions := service.NewTransactionService(service.TransactionServiceParams{
 		Users:        repository.NewUserRepository(db),
 		Transactions: repository.NewTransactionRepository(db),
+		Checkpoints:  repository.NewCheckpointRepository(db),
 	})
 
 	return transactions, closeDatabase, nil

@@ -10,6 +10,7 @@ import (
 	"github.com/farhapartex/lending-platform/core-service/internal/transport/http/dto"
 	"github.com/farhapartex/lending-platform/core-service/internal/transport/http/middleware"
 	"github.com/farhapartex/lending-platform/core-service/pkg/idmask"
+	"github.com/farhapartex/lending-platform/core-service/pkg/queryparam"
 )
 
 type AccountHandlerParams struct {
@@ -54,6 +55,35 @@ func (h *AccountHandler) GetTransaction(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, dto.NewTransactionResponse(transaction, publicID))
+}
+
+func (h *AccountHandler) ListTransactions(c *gin.Context) {
+	request, err := dto.ParseTransactionListRequest(c.Param("address"), c.Request.URL.Query())
+	if err != nil {
+		respondBadRequest(c, queryparam.Message(err))
+
+		return
+	}
+
+	page, err := h.transactions.List(c.Request.Context(), request)
+	if err != nil {
+		respondDomainError(c, err, "That wallet has no history.")
+
+		return
+	}
+
+	response, err := dto.NewTransactionListResponse(page, h.maskTransactionID)
+	if err != nil {
+		respondInternalError(c)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func (h *AccountHandler) maskTransactionID(id int64) (string, error) {
+	return h.masker.Mask(idmask.KindTransaction, id)
 }
 
 func respondDomainError(c *gin.Context, err error, notFoundMessage string) {

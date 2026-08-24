@@ -2,6 +2,7 @@ package queryparam_test
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"testing"
 	"time"
@@ -202,5 +203,34 @@ func TestParamErrorMessageNamesTheParameterAndReason(t *testing.T) {
 
 	if !errors.Is(err, queryparam.ErrInvalid) {
 		t.Fatal("expected the sentinel to be reachable through errors.Is")
+	}
+}
+
+func TestMessageNamesTheParameterAndReason(t *testing.T) {
+	err := &queryparam.ParamError{Param: "limit", Reason: "must be a whole number"}
+
+	if got := queryparam.Message(err); got != "The limit parameter must be a whole number." {
+		t.Fatalf("unexpected message %q", got)
+	}
+}
+
+func TestMessageReadsThroughAWrappedParamError(t *testing.T) {
+	wrapped := fmt.Errorf("while binding the request: %w", &queryparam.ParamError{
+		Param:  "cursor",
+		Reason: "is not a cursor from a previous response",
+	})
+
+	want := "The cursor parameter is not a cursor from a previous response."
+
+	if got := queryparam.Message(wrapped); got != want {
+		t.Fatalf("unexpected message %q", got)
+	}
+}
+
+func TestMessageFallsBackForAnyOtherError(t *testing.T) {
+	for _, err := range []error{errors.New("something else"), nil} {
+		if got := queryparam.Message(err); got != "That request could not be read." {
+			t.Fatalf("expected the generic message for %v, got %q", err, got)
+		}
 	}
 }

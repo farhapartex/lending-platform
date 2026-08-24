@@ -24,6 +24,15 @@ func (e *ParamError) Unwrap() error {
 	return ErrInvalid
 }
 
+func Message(err error) string {
+	var paramError *ParamError
+	if errors.As(err, &paramError) {
+		return fmt.Sprintf("The %s parameter %s.", paramError.Param, paramError.Reason)
+	}
+
+	return "That request could not be read."
+}
+
 func invalid(param, reason string) error {
 	return &ParamError{Param: param, Reason: reason}
 }
