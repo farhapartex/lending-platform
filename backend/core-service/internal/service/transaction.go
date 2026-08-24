@@ -14,6 +14,9 @@ import (
 const (
 	DefaultTransactionPageSize = 25
 	MaxTransactionPageSize     = 100
+
+	DefaultActivitySize = 5
+	MaxActivitySize     = 20
 )
 
 type TransactionServiceParams struct {
@@ -83,24 +86,19 @@ func (s *transactionService) List(
 		return domain.TransactionPage{}, err
 	}
 
-	pageSize := boundedPageSize(request.Limit)
+	pageSize := boundedSize(request.Limit, DefaultTransactionPageSize, MaxTransactionPageSize)
 
-	asOf, err := s.indexedAt(ctx)
+	owner, err := s.resolveOwner(ctx, normalized)
 	if err != nil {
 		return domain.TransactionPage{}, err
 	}
 
-	user, err := s.users.ByAddress(ctx, normalized)
-	if err != nil {
-		if errors.Is(err, domain.ErrNotFound) {
-			return emptyPage(asOf), nil
-		}
-
-		return domain.TransactionPage{}, err
+	if !owner.found {
+		return emptyPage(owner.asOf), nil
 	}
 
 	found, err := s.transactions.List(ctx, domain.TransactionQuery{
-		UserID: user.ID,
+		UserID: owner.userID,
 		Kinds:  request.Kinds,
 		From:   request.From,
 		To:     request.To,
@@ -113,7 +111,61 @@ func (s *transactionService) List(
 
 	items, next := trimToPage(found, pageSize)
 
-	return domain.TransactionPage{Items: items, NextCursor: next, AsOf: asOf}, nil
+	return domain.TransactionPage{Items: items, NextCursor: next, AsOf: owner.asOf}, nil
+}
+
+func (s *transactionService) RecentActivity(
+	ctx context.Context,
+	address string,
+	limit int,
+) (domain.TransactionPage, error) {
+	normalized, err := ethaddr.Normalize(address)
+	if err != nil {
+		return domain.TransactionPage{}, fmt.Errorf("%w: address %s", domain.ErrInvalidInput, err)
+	}
+
+	owner, err := s.resolveOwner(ctx, normalized)
+	if err != nil {
+		return domain.TransactionPage{}, err
+	}
+
+	if !owner.found {
+		return emptyPage(owner.asOf), nil
+	}
+
+	items, err := s.transactions.List(ctx, domain.TransactionQuery{
+		UserID: owner.userID,
+		Limit:  boundedSize(limit, DefaultActivitySize, MaxActivitySize),
+	})
+	if err != nil {
+		return domain.TransactionPage{}, err
+	}
+
+	return domain.TransactionPage{Items: items, AsOf: owner.asOf}, nil
+}
+
+type pageOwner struct {
+	userID int64
+	asOf   domain.IndexedAt
+	found  bool
+}
+
+func (s *transactionService) resolveOwner(ctx context.Context, address string) (pageOwner, error) {
+	asOf, err := s.indexedAt(ctx)
+	if err != nil {
+		return pageOwner{}, err
+	}
+
+	user, err := s.users.ByAddress(ctx, address)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return pageOwner{asOf: asOf}, nil
+		}
+
+		return pageOwner{}, err
+	}
+
+	return pageOwner{userID: user.ID, asOf: asOf, found: true}, nil
 }
 
 func (s *transactionService) indexedAt(ctx context.Context) (domain.IndexedAt, error) {
@@ -163,13 +215,13 @@ func validateWindow(from *time.Time, to *time.Time) error {
 	return nil
 }
 
-func boundedPageSize(limit int) int {
+func boundedSize(limit int, fallback int, ceiling int) int {
 	if limit < 1 {
-		return DefaultTransactionPageSize
+		return fallback
 	}
 
-	if limit > MaxTransactionPageSize {
-		return MaxTransactionPageSize
+	if limit > ceiling {
+		return ceiling
 	}
 
 	return limit

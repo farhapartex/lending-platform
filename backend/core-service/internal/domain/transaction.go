@@ -88,4 +88,5 @@ type IndexedAt struct {
 type TransactionService interface {
 	ByID(ctx context.Context, address string, id int64) (UserTransaction, error)
 	List(ctx context.Context, request TransactionListRequest) (TransactionPage, error)
+	RecentActivity(ctx context.Context, address string, limit int) (TransactionPage, error)
 }
