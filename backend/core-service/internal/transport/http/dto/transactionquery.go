@@ -38,16 +38,9 @@ func ParseTransactionListRequest(address string, values url.Values) (domain.Tran
 		return domain.TransactionListRequest{}, err
 	}
 
-	limit, err := queryparam.Int(values, ParamLimit, 0)
+	limit, err := ParseLimit(values)
 	if err != nil {
 		return domain.TransactionListRequest{}, err
-	}
-
-	if limit < 0 {
-		return domain.TransactionListRequest{}, &queryparam.ParamError{
-			Param:  ParamLimit,
-			Reason: "must not be negative",
-		}
 	}
 
 	return domain.TransactionListRequest{
@@ -58,6 +51,19 @@ func ParseTransactionListRequest(address string, values url.Values) (domain.Tran
 		After:   after,
 		Limit:   limit,
 	}, nil
+}
+
+func ParseLimit(values url.Values) (int, error) {
+	limit, err := queryparam.Int(values, ParamLimit, 0)
+	if err != nil {
+		return 0, err
+	}
+
+	if limit < 0 {
+		return 0, &queryparam.ParamError{Param: ParamLimit, Reason: "must not be negative"}
+	}
+
+	return limit, nil
 }
 
 func parseKinds(values url.Values) ([]domain.TransactionKind, error) {

@@ -297,3 +297,137 @@ func TestParseTransactionListRequestIgnoresBlankValues(t *testing.T) {
 		t.Fatalf("expected an unfiltered request, got %+v", request)
 	}
 }
+
+func TestActivityResponseCarriesItemsAndAsOf(t *testing.T) {
+	block := int64(4_218)
+
+	response, err := dto.NewActivityResponse(pageWith(2, cursor.Key{}, &block), maskAsHex)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(response.Items) != 2 {
+		t.Fatalf("expected 2 items, got %d", len(response.Items))
+	}
+
+	if response.AsOf.Block == nil || *response.AsOf.Block != 4_218 {
+		t.Fatalf("expected block 4218, got %v", response.AsOf.Block)
+	}
+
+	if response.AsOf.Time != "2026-08-22T09:30:00Z" {
+		t.Fatalf("unexpected time %q", response.AsOf.Time)
+	}
+}
+
+func TestActivityResponseHasNoCursorField(t *testing.T) {
+	response, err := dto.NewActivityResponse(pageWith(1, cursor.Key{Time: listMoment, ID: 42}, nil), maskAsHex)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	encoded, err := json.Marshal(response)
+	if err != nil {
+		t.Fatalf("could not encode: %v", err)
+	}
+
+	if strings.Contains(string(encoded), "next_cursor") {
+		t.Fatalf("the dashboard list does not page, so no cursor should be emitted even if the page carries one, got %s", encoded)
+	}
+}
+
+func TestActivityResponseSerialisesAnEmptyListAsAnArray(t *testing.T) {
+	response, err := dto.NewActivityResponse(pageWith(0, cursor.Key{}, nil), maskAsHex)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	encoded, err := json.Marshal(response)
+	if err != nil {
+		t.Fatalf("could not encode: %v", err)
+	}
+
+	if !strings.Contains(string(encoded), `"items":[]`) {
+		t.Fatalf("expected an empty array rather than null, got %s", encoded)
+	}
+}
+
+func TestActivityResponseMasksEveryItem(t *testing.T) {
+	response, err := dto.NewActivityResponse(pageWith(3, cursor.Key{}, nil), maskAsHex)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	for _, item := range response.Items {
+		if !strings.HasPrefix(item.ID, "txn_") {
+			t.Fatalf("expected a masked id, got %q", item.ID)
+		}
+	}
+}
+
+func TestActivityResponseSurfacesAMaskingFailure(t *testing.T) {
+	if _, err := dto.NewActivityResponse(pageWith(2, cursor.Key{}, nil), failingMask); err == nil {
+		t.Fatal("expected a masking failure to surface rather than emit a blank id")
+	}
+}
+
+func TestActivityAndListShareTheItemShape(t *testing.T) {
+	page := pageWith(1, cursor.Key{}, nil)
+
+	list, err := dto.NewTransactionListResponse(page, maskAsHex)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	activity, err := dto.NewActivityResponse(page, maskAsHex)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if list.Items[0] != activity.Items[0] {
+		t.Fatalf("one client type must cover both, got %+v and %+v", list.Items[0], activity.Items[0])
+	}
+}
+
+func TestParseLimitReadsAndValidates(t *testing.T) {
+	cases := map[string]struct {
+		values url.Values
+		want   int
+	}{
+		"absent": {values: url.Values{}, want: 0},
+		"blank":  {values: url.Values{dto.ParamLimit: []string{"  "}}, want: 0},
+		"zero":   {values: url.Values{dto.ParamLimit: []string{"0"}}, want: 0},
+		"value":  {values: url.Values{dto.ParamLimit: []string{"12"}}, want: 12},
+		"spaced": {values: url.Values{dto.ParamLimit: []string{" 7 "}}, want: 7},
+		"large":  {values: url.Values{dto.ParamLimit: []string{"9999"}}, want: 9999},
+	}
+
+	for name, testCase := range cases {
+		t.Run(name, func(t *testing.T) {
+			got, err := dto.ParseLimit(testCase.values)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if got != testCase.want {
+				t.Fatalf("expected %d, got %d", testCase.want, got)
+			}
+		})
+	}
+}
+
+func TestParseLimitRejectsBadValues(t *testing.T) {
+	for _, raw := range []string{"many", "-1", "-999", "1.5"} {
+		t.Run(raw, func(t *testing.T) {
+			_, err := dto.ParseLimit(url.Values{dto.ParamLimit: []string{raw}})
+
+			if !errors.Is(err, queryparam.ErrInvalid) {
+				t.Fatalf("expected ErrInvalid for %q, got %v", raw, err)
+			}
+
+			var paramError *queryparam.ParamError
+			if !errors.As(err, &paramError) || paramError.Param != dto.ParamLimit {
+				t.Fatalf("expected the error to name the limit parameter, got %v", err)
+			}
+		})
+	}
+}

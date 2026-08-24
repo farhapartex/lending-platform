@@ -18,18 +18,17 @@ type TransactionListResponse struct {
 	AsOf       AsOfResponse          `json:"as_of"`
 }
 
+type ActivityResponse struct {
+	Items []TransactionResponse `json:"items"`
+	AsOf  AsOfResponse          `json:"as_of"`
+}
+
 type PublicIDFunc func(id int64) (string, error)
 
 func NewTransactionListResponse(page domain.TransactionPage, publicID PublicIDFunc) (TransactionListResponse, error) {
-	items := make([]TransactionResponse, 0, len(page.Items))
-
-	for _, transaction := range page.Items {
-		masked, err := publicID(transaction.ID)
-		if err != nil {
-			return TransactionListResponse{}, err
-		}
-
-		items = append(items, NewTransactionResponse(transaction, masked))
+	items, err := newTransactionItems(page.Items, publicID)
+	if err != nil {
+		return TransactionListResponse{}, err
 	}
 
 	return TransactionListResponse{
@@ -37,6 +36,36 @@ func NewTransactionListResponse(page domain.TransactionPage, publicID PublicIDFu
 		NextCursor: encodeNextCursor(page.NextCursor),
 		AsOf:       newAsOfResponse(page.AsOf),
 	}, nil
+}
+
+func NewActivityResponse(page domain.TransactionPage, publicID PublicIDFunc) (ActivityResponse, error) {
+	items, err := newTransactionItems(page.Items, publicID)
+	if err != nil {
+		return ActivityResponse{}, err
+	}
+
+	return ActivityResponse{
+		Items: items,
+		AsOf:  newAsOfResponse(page.AsOf),
+	}, nil
+}
+
+func newTransactionItems(
+	transactions []domain.UserTransaction,
+	publicID PublicIDFunc,
+) ([]TransactionResponse, error) {
+	items := make([]TransactionResponse, 0, len(transactions))
+
+	for _, transaction := range transactions {
+		masked, err := publicID(transaction.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, NewTransactionResponse(transaction, masked))
+	}
+
+	return items, nil
 }
 
 func encodeNextCursor(key cursor.Key) *string {
