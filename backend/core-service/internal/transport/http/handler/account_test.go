@@ -28,8 +28,28 @@ type stubTransactionService struct {
 	lastAddress  string
 	lastID       int64
 	lastRequest  domain.TransactionListRequest
+	lastLimit    int
 	callCount    int
 	listCount    int
+
+	activityFailWith error
+	activityCount    int
+}
+
+func (s *stubTransactionService) RecentActivity(
+	_ context.Context,
+	address string,
+	limit int,
+) (domain.TransactionPage, error) {
+	s.lastAddress = address
+	s.lastLimit = limit
+	s.activityCount++
+
+	if s.activityFailWith != nil {
+		return domain.TransactionPage{}, s.activityFailWith
+	}
+
+	return s.page, nil
 }
 
 func (s *stubTransactionService) List(

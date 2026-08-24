@@ -76,6 +76,7 @@ func registerAccountRoutes(group *gin.RouterGroup, params RouterParams) {
 		Masker:       params.Masker,
 	})
 
+	group.GET("/accounts/:address/activity", accounts.GetActivity)
 	group.GET("/accounts/:address/transactions", accounts.ListTransactions)
 	group.GET("/accounts/:address/transactions/:transactionId", accounts.GetTransaction)
 }
