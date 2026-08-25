@@ -23,3 +23,13 @@ export type WireTransaction = {
   log_index: number;
   status: string;
 };
+
+export type WireAsOf = {
+  block: number | null;
+  time: string;
+};
+
+export type WireActivity = {
+  items: WireTransaction[];
+  as_of: WireAsOf;
+};

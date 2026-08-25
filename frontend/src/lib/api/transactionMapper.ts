@@ -1,6 +1,6 @@
 import { ActivityKind, ApiErrorCode } from "@/lib/enums";
 import { ApiError } from "@/lib/api/errors";
-import type { WireAmount, WireTransaction } from "@/lib/api/wire";
+import type { WireAmount, WireAsOf, WireActivity, WireTransaction } from "@/lib/api/wire";
 
 export type TransactionDetail = {
   id: string;
@@ -118,5 +118,42 @@ export function toTransactionDetail(wire: WireTransaction): TransactionDetail {
     txHash: wire.tx_hash,
     logIndex: toWholeNumber(wire.log_index, "log_index"),
     healthFactorAfterBps: toHealthFactorBps(wire.health_factor_after_bps),
+  };
+}
+
+export type IndexedAt = {
+  block: number | null;
+  time: string;
+};
+
+export type ActivityPage = {
+  items: TransactionDetail[];
+  asOf: IndexedAt;
+};
+
+export function toIndexedAt(wire: WireAsOf | undefined): IndexedAt {
+  if (wire === undefined) {
+    throw malformed("as_of");
+  }
+
+  if (typeof wire.time !== "string" || Number.isNaN(Date.parse(wire.time))) {
+    throw malformed("as_of.time");
+  }
+
+  if (wire.block !== null && (!Number.isInteger(wire.block) || wire.block < 0)) {
+    throw malformed("as_of.block");
+  }
+
+  return { block: wire.block, time: wire.time };
+}
+
+export function toActivityPage(wire: WireActivity): ActivityPage {
+  if (!Array.isArray(wire?.items)) {
+    throw malformed("items");
+  }
+
+  return {
+    items: wire.items.map((item) => toTransactionDetail(item)),
+    asOf: toIndexedAt(wire.as_of),
   };
 }
