@@ -56,4 +56,29 @@ export const liquidationsPageContent = {
   unavailableTitle: "Cannot load eligible positions",
   unavailableDescription:
     "This list is built from indexed contract events, and that service is unreachable right now. Positions are still safe and liquidations can still happen on-chain.",
+  historyTitle: "Liquidations already settled",
+  historyDescription:
+    "Every liquidation that has run on this market, newest first. Useful for seeing what a real one pays out before you attempt your own.",
+  historyEmptyTitle: "No liquidations have happened yet",
+  historyEmptyDescription:
+    "Nobody has been liquidated on this market so far. That means every borrower has stayed above the threshold.",
+  historyNotIndexedTitle: "Past liquidations are not ready yet",
+  historyNotIndexedDescription:
+    "This list replays settled liquidations from indexed contract events, and that record is still being built.",
+  historyUnavailableTitle: "Cannot load past liquidations",
+  historyUnavailableDescription:
+    "The service that keeps this record is unreachable. Live eligibility above is unaffected, and liquidations can still run on-chain.",
+  historyRetry: "Try again",
+  receiptTitle: "Liquidation receipt",
+  receiptUnavailableTitle: "Cannot load this receipt",
+  receiptUnavailableDescription:
+    "The figures below come from the row you selected and are accurate. The full record could not be fetched.",
+  receiptMissingTitle: "This liquidation is no longer on record",
+  receiptMissingDescription:
+    "The indexed history may have been rebuilt after a chain reorganisation.",
+  shortfallBadge: "Lost money",
+  shortfallExplainer:
+    "The collateral was worth less than the debt plus bonus, so the liquidator paid out more than they received. This is bad debt for the protocol.",
+  loadMore: "Load more",
+  showingCount: "Showing the most recent liquidations",
 } as const;

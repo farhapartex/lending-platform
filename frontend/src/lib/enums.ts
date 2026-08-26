@@ -41,6 +41,7 @@ export enum SectionId {
   DashboardPositions = "your-positions",
   DashboardActivity = "recent-activity",
   LiquidationsList = "eligible-positions",
+  LiquidationsHistory = "past-liquidations",
   HistoryList = "transaction-history",
   PracticeExplainer = "what-is-real",
   PracticeSetup = "getting-set-up",

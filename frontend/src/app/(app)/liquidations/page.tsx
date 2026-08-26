@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
 import { PriceStalenessWarning } from "@/components/markets/PriceStalenessWarning";
 import { HowLiquidationWorksCallout } from "@/components/liquidations/HowLiquidationWorksCallout";
+import { LiquidationHistoryPanel } from "@/components/liquidations/LiquidationHistoryPanel";
 import { LiquidationsPanel } from "@/components/liquidations/LiquidationsPanel";
 
 export const metadata: Metadata = {
@@ -37,6 +38,24 @@ export default function LiquidationsPage() {
             <HowLiquidationWorksCallout />
           </div>
         )}
+      </Section>
+
+      <Section id={SectionId.LiquidationsHistory} tone={SectionTone.Surface}>
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-1.5">
+            <h2
+              id={`${SectionId.LiquidationsHistory}-heading`}
+              className="text-lg font-semibold tracking-tight text-ink"
+            >
+              {liquidationsPageContent.historyTitle}
+            </h2>
+            <p className="max-w-2xl text-sm leading-relaxed text-ink-soft">
+              {liquidationsPageContent.historyDescription}
+            </p>
+          </div>
+
+          <LiquidationHistoryPanel />
+        </div>
       </Section>
 
       <Container className="pb-4">
