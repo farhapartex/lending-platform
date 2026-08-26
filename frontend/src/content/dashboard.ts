@@ -1,18 +1,9 @@
-import { ActivityKind, AssetSymbol } from "@/lib/enums";
+import { AssetSymbol } from "@/lib/enums";
 import { assetDecimals } from "@/content/protocol";
 import { parseTokenAmount } from "@/lib/token";
 
 const usdcDecimals = assetDecimals[AssetSymbol.Usdc];
 const wethDecimals = assetDecimals[AssetSymbol.Weth];
-
-export type ActivityEntry = {
-  id: string;
-  kind: ActivityKind;
-  amount: bigint;
-  symbol: AssetSymbol;
-  decimals: number;
-  timestamp: string;
-};
 
 export type LiquidationEvent = {
   id: string;
@@ -23,49 +14,6 @@ export type LiquidationEvent = {
   healthFactorAtLiquidation: string;
   triggerPrice: number;
 };
-
-export const recentActivity: ActivityEntry[] = [
-  {
-    id: "act-1",
-    kind: ActivityKind.Borrow,
-    amount: parseTokenAmount("1500", usdcDecimals) ?? 0n,
-    symbol: AssetSymbol.Usdc,
-    decimals: usdcDecimals,
-    timestamp: "2026-08-07T14:22:00Z",
-  },
-  {
-    id: "act-2",
-    kind: ActivityKind.CollateralAdded,
-    amount: parseTokenAmount("0.75", wethDecimals) ?? 0n,
-    symbol: AssetSymbol.Weth,
-    decimals: wethDecimals,
-    timestamp: "2026-08-06T09:05:00Z",
-  },
-  {
-    id: "act-3",
-    kind: ActivityKind.Deposit,
-    amount: parseTokenAmount("10000", usdcDecimals) ?? 0n,
-    symbol: AssetSymbol.Usdc,
-    decimals: usdcDecimals,
-    timestamp: "2026-08-04T18:40:00Z",
-  },
-  {
-    id: "act-4",
-    kind: ActivityKind.Liquidation,
-    amount: parseTokenAmount("2100", usdcDecimals) ?? 0n,
-    symbol: AssetSymbol.Usdc,
-    decimals: usdcDecimals,
-    timestamp: "2026-08-01T03:12:00Z",
-  },
-  {
-    id: "act-5",
-    kind: ActivityKind.Repay,
-    amount: parseTokenAmount("640", usdcDecimals) ?? 0n,
-    symbol: AssetSymbol.Usdc,
-    decimals: usdcDecimals,
-    timestamp: "2026-07-29T11:58:00Z",
-  },
-];
 
 export const recentLiquidation: LiquidationEvent | null = {
   id: "liq-1",
@@ -84,6 +32,16 @@ export const dashboardContent = {
   positionsTitle: "Your positions",
   activityTitle: "Recent activity",
   activityDescription: "The last few things that happened to your positions.",
+  activityEmptyTitle: "Nothing has happened yet",
+  activityEmptyDescription:
+    "Your deposits, loans, repayments, and any liquidations will show up here.",
+  activityNotIndexedTitle: "Activity history is not ready yet",
+  activityNotIndexedDescription:
+    "Your positions above are read straight from the blockchain and are correct. This panel replays past events, and that record is still being built.",
+  activityUnavailableTitle: "Recent activity is unavailable",
+  activityUnavailableDescription:
+    "We could not reach the service that keeps your history. Everything above is read from the blockchain and is unaffected.",
+  activityRetry: "Try again",
   simulatorTrigger: "Test a price drop",
   emptyTitle: "You do not have any positions yet",
   emptyDescription:
