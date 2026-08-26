@@ -22,6 +22,13 @@ export class ApiError extends Error {
   }
 }
 
+export function malformedResponse(field: string): ApiError {
+  return new ApiError({
+    code: ApiErrorCode.MalformedResponse,
+    message: `The server sent a response we could not read (${field}).`,
+  });
+}
+
 export function isApiError(error: unknown): error is ApiError {
   return error instanceof ApiError;
 }
