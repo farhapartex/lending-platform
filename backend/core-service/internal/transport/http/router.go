@@ -21,6 +21,7 @@ type RouterParams struct {
 	Logger             *slog.Logger
 	HealthService      domain.HealthService
 	TransactionService domain.TransactionService
+	LiquidationService domain.LiquidationService
 	Masker             *idmask.Masker
 }
 
@@ -62,8 +63,23 @@ func NewRouter(params RouterParams) *gin.Engine {
 	v1.GET("/health", healthHandler.Get)
 
 	registerAccountRoutes(v1, params)
+	registerLiquidationRoutes(v1, params)
 
 	return engine
+}
+
+func registerLiquidationRoutes(group *gin.RouterGroup, params RouterParams) {
+	if params.LiquidationService == nil || params.Masker == nil {
+		return
+	}
+
+	liquidations := handler.NewLiquidationHandler(handler.LiquidationHandlerParams{
+		Liquidations: params.LiquidationService,
+		Masker:       params.Masker,
+	})
+
+	group.GET("/liquidations/history", liquidations.ListHistory)
+	group.GET("/liquidations/:liquidationId", liquidations.GetReceipt)
 }
 
 func registerAccountRoutes(group *gin.RouterGroup, params RouterParams) {

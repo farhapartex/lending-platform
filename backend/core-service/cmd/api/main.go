@@ -57,7 +57,7 @@ func run() error {
 		return fmt.Errorf("id masking could not be set up: %w", err)
 	}
 
-	transactionService, closeDatabase, err := buildTransactionService(cfg, log)
+	stores, closeDatabase, err := buildStores(cfg, log)
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,8 @@ func run() error {
 		Config:             cfg,
 		Logger:             log,
 		HealthService:      healthService,
-		TransactionService: transactionService,
+		TransactionService: stores.transactions,
+		LiquidationService: stores.liquidations,
 		Masker:             masker,
 	})
 
@@ -120,14 +121,16 @@ func run() error {
 	return nil
 }
 
-func buildTransactionService(
-	cfg config.Config,
-	log *slog.Logger,
-) (domain.TransactionService, func(), error) {
-	if cfg.DatabaseURL == "" {
-		log.Warn("DATABASE_URL is not set, account endpoints will not be served")
+type stores struct {
+	transactions domain.TransactionService
+	liquidations domain.LiquidationService
+}
 
-		return nil, nil, nil
+func buildStores(cfg config.Config, log *slog.Logger) (stores, func(), error) {
+	if cfg.DatabaseURL == "" {
+		log.Warn("DATABASE_URL is not set, database backed endpoints will not be served")
+
+		return stores{}, nil, nil
 	}
 
 	db, err := database.Open(database.Options{
@@ -139,7 +142,7 @@ func buildTransactionService(
 		LogQueries:      cfg.DatabaseLogQueries,
 	})
 	if err != nil {
-		return nil, nil, fmt.Errorf("database connection failed: %w", err)
+		return stores{}, nil, fmt.Errorf("database connection failed: %w", err)
 	}
 
 	closeDatabase := func() {
@@ -153,11 +156,19 @@ func buildTransactionService(
 		}
 	}
 
-	transactions := service.NewTransactionService(service.TransactionServiceParams{
-		Users:        repository.NewUserRepository(db),
-		Transactions: repository.NewTransactionRepository(db),
-		Checkpoints:  repository.NewCheckpointRepository(db),
-	})
+	checkpoints := repository.NewCheckpointRepository(db)
 
-	return transactions, closeDatabase, nil
+	built := stores{
+		transactions: service.NewTransactionService(service.TransactionServiceParams{
+			Users:        repository.NewUserRepository(db),
+			Transactions: repository.NewTransactionRepository(db),
+			Checkpoints:  checkpoints,
+		}),
+		liquidations: service.NewLiquidationService(service.LiquidationServiceParams{
+			Liquidations: repository.NewLiquidationRepository(db),
+			Checkpoints:  checkpoints,
+		}),
+	}
+
+	return built, closeDatabase, nil
 }
