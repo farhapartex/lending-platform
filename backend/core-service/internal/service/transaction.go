@@ -34,16 +34,11 @@ type transactionService struct {
 }
 
 func NewTransactionService(params TransactionServiceParams) domain.TransactionService {
-	now := params.Now
-	if now == nil {
-		now = time.Now
-	}
-
 	return &transactionService{
 		users:        params.Users,
 		transactions: params.Transactions,
 		checkpoints:  params.Checkpoints,
-		now:          now,
+		now:          clockOr(params.Now),
 	}
 }
 
@@ -109,7 +104,7 @@ func (s *transactionService) List(
 		return domain.TransactionPage{}, err
 	}
 
-	items, next := trimToPage(found, pageSize)
+	items, next := trimToPage(found, pageSize, transactionKey)
 
 	return domain.TransactionPage{Items: items, NextCursor: next, AsOf: owner.asOf}, nil
 }
@@ -151,7 +146,7 @@ type pageOwner struct {
 }
 
 func (s *transactionService) resolveOwner(ctx context.Context, address string) (pageOwner, error) {
-	asOf, err := s.indexedAt(ctx)
+	asOf, err := indexedAt(ctx, s.checkpoints, s.now)
 	if err != nil {
 		return pageOwner{}, err
 	}
@@ -166,27 +161,6 @@ func (s *transactionService) resolveOwner(ctx context.Context, address string) (
 	}
 
 	return pageOwner{userID: user.ID, asOf: asOf, found: true}, nil
-}
-
-func (s *transactionService) indexedAt(ctx context.Context) (domain.IndexedAt, error) {
-	now := s.now().UTC()
-
-	if s.checkpoints == nil {
-		return domain.IndexedAt{Time: now}, nil
-	}
-
-	checkpoint, err := s.checkpoints.ByStream(ctx, domain.IndexerStreamProtocolEvents)
-	if err != nil {
-		if errors.Is(err, domain.ErrNotFound) {
-			return domain.IndexedAt{Time: now}, nil
-		}
-
-		return domain.IndexedAt{}, err
-	}
-
-	block := checkpoint.LastProcessedBlock
-
-	return domain.IndexedAt{Block: &block, Time: checkpoint.UpdatedAt.UTC()}, nil
 }
 
 func emptyPage(asOf domain.IndexedAt) domain.TransactionPage {
@@ -215,25 +189,6 @@ func validateWindow(from *time.Time, to *time.Time) error {
 	return nil
 }
 
-func boundedSize(limit int, fallback int, ceiling int) int {
-	if limit < 1 {
-		return fallback
-	}
-
-	if limit > ceiling {
-		return ceiling
-	}
-
-	return limit
-}
-
-func trimToPage(found []domain.UserTransaction, pageSize int) ([]domain.UserTransaction, cursor.Key) {
-	if len(found) <= pageSize {
-		return found, cursor.Key{}
-	}
-
-	items := found[:pageSize]
-	last := items[len(items)-1]
-
-	return items, cursor.Key{Time: last.BlockTime, ID: last.ID}
+func transactionKey(transaction domain.UserTransaction) cursor.Key {
+	return cursor.Key{Time: transaction.BlockTime, ID: transaction.ID}
 }
