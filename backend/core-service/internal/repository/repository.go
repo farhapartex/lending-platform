@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/farhapartex/lending-platform/core-service/internal/domain"
+	"github.com/farhapartex/lending-platform/core-service/pkg/cursor"
 	"github.com/farhapartex/lending-platform/core-service/pkg/ethaddr"
 )
 
@@ -53,4 +54,20 @@ func requirePositiveID(id int64, field string) error {
 	}
 
 	return nil
+}
+
+func applyKeysetCursor(statement *gorm.DB, after cursor.Key) *gorm.DB {
+	if after.IsZero() {
+		return statement
+	}
+
+	return statement.Where("(block_time, id) < (?, ?)", after.Time.UTC(), after.ID)
+}
+
+func withRelations(statement *gorm.DB, relations []string) *gorm.DB {
+	for _, relation := range relations {
+		statement = statement.Preload(relation)
+	}
+
+	return statement
 }

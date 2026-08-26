@@ -1,9 +1,11 @@
 package domain
 
 import (
+	"context"
 	"time"
 
 	"github.com/farhapartex/lending-platform/core-service/pkg/bigmath"
+	"github.com/farhapartex/lending-platform/core-service/pkg/cursor"
 )
 
 type Liquidation struct {
@@ -32,4 +34,33 @@ type Liquidation struct {
 
 func (Liquidation) TableName() string {
 	return "liquidations"
+}
+
+type LiquidationQuery struct {
+	MarketID *int64
+	After    cursor.Key
+	Limit    int
+}
+
+type LiquidationListRequest struct {
+	MarketID *int64
+	After    cursor.Key
+	Limit    int
+}
+
+type LiquidationPage struct {
+	Items      []Liquidation
+	NextCursor cursor.Key
+	AsOf       IndexedAt
+}
+
+type LiquidationRepository interface {
+	List(ctx context.Context, query LiquidationQuery) ([]Liquidation, error)
+	ByID(ctx context.Context, id int64) (Liquidation, error)
+	Insert(ctx context.Context, liquidation *Liquidation) error
+}
+
+type LiquidationService interface {
+	List(ctx context.Context, request LiquidationListRequest) (LiquidationPage, error)
+	ByID(ctx context.Context, id int64) (Liquidation, error)
 }

@@ -37,7 +37,7 @@ func (r *transactionRepository) List(
 
 	statement = applyKindFilter(statement, query.Kinds)
 	statement = applyTimeWindow(statement, query)
-	statement = applyKeysetCursor(statement, query)
+	statement = applyKeysetCursor(statement, query.After)
 
 	result := statement.
 		Order("block_time DESC, id DESC").
@@ -110,16 +110,4 @@ func applyTimeWindow(statement *gorm.DB, query domain.TransactionQuery) *gorm.DB
 	}
 
 	return statement
-}
-
-func applyKeysetCursor(statement *gorm.DB, query domain.TransactionQuery) *gorm.DB {
-	if query.After.IsZero() {
-		return statement
-	}
-
-	return statement.Where(
-		"(block_time, id) < (?, ?)",
-		query.After.Time.UTC(),
-		query.After.ID,
-	)
 }
