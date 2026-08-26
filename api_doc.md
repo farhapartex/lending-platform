@@ -16,8 +16,8 @@ So the surface is deliberately small — **six endpoints plus a health check.**
 | [`/accounts/{address}/transactions/{transactionId}`](#get-accountsaddresstransactionstransactionid) | GET | `TxDetailDrawer` | **Live** |
 | [`/accounts/{address}/activity`](#get-accountsaddressactivity) | GET | Dashboard `RecentActivityList` | **Live** |
 | [`/liquidations/eligible`](#get-liquidationseligible) | GET | `LiquidatablePositionsTable` | Planned |
-| [`/liquidations/history`](#get-liquidationshistory) | GET | Past liquidations | Planned |
-| [`/liquidations/{liquidationId}`](#get-liquidationsliquidationid) | GET | `LiquidationReceipt` | Planned |
+| [`/liquidations/history`](#get-liquidationshistory) | GET | Past liquidations | **Live** |
+| [`/liquidations/{liquidationId}`](#get-liquidationsliquidationid) | GET | `LiquidationReceipt` | **Live** |
 
 **Only `/health` is implemented.** The six planned endpoints all serve indexed event history, so they are
 blocked on the same thing: **the indexer**. None can be built before it exists.
@@ -394,9 +394,143 @@ A `limit` above 20 is silently capped.
 
 ---
 
+## GET /liquidations/history
+
+Completed liquidations, newest first. **Public and unauthenticated** — a liquidation is a public on-chain
+event, and liquidators need to study past work before connecting a wallet.
+
+| Parameter | In | Default | Notes |
+| --- | --- | --- | --- |
+| `market` | query | all | A masked `mkt_…` id. Never construct one |
+| `cursor` | query | — | An opaque `next_cursor` from a previous response |
+| `limit` | query | 25 | Capped at 100 |
+
+```bash
+BASE=http://localhost:8080/api/v1/liquidations
+
+curl -s "$BASE/history?limit=2"
+curl -s "$BASE/history?market=mkt_zbgqajqihcctneocuahq"
+```
+
+### Response — 200 OK
+
+```json
+{
+  "items": [
+    {
+      "id": "liq_5h74y4qafdaywxk7z64a",
+      "borrower": "0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc",
+      "liquidator": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+      "debt_repaid": { "amount": "5100000000", "decimals": 6, "symbol": "USDC" },
+      "collateral_seized": { "amount": "1846551724137931035", "decimals": 18, "symbol": "WETH" },
+      "bonus_value": { "amount": "25500000000", "decimals": 8, "symbol": "USD" },
+      "shortfall_value": { "amount": "0", "decimals": 8, "symbol": "USD" },
+      "health_factor_before_bps": 9099,
+      "trigger_price": { "amount": "220000000000", "decimals": 8, "symbol": "USD" },
+      "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "block": 4001,
+      "block_time": "2026-08-22T08:00:00Z"
+    }
+  ],
+  "next_cursor": "djEuMTc4NzM4MjAwMDAwMDAwMC4yNg",
+  "as_of": { "block": 4218, "time": "2026-08-22T09:30:00Z" }
+}
+```
+
+### Three amounts, three different scales
+
+This is the part to get right. Every figure carries its own `decimals` and `symbol`, so **never assume a
+scale** — read it from the field.
+
+| Field | Denominated in | Why |
+| --- | --- | --- |
+| `debt_repaid` | The market's **debt** asset | The liquidator repaid the borrower's loan, so this is USDC at 6 decimals |
+| `collateral_seized` | The market's **collateral** asset | They received collateral, so this is WETH at 18 decimals |
+| `bonus_value` | **USD value**, at the trigger price's scale | The contract emits the bonus as a value, not a token amount |
+| `shortfall_value` | **USD value**, same scale | Also a value |
+| `trigger_price` | **USD**, scale from the event | The collateral price that made the position liquidatable |
+
+The three USD figures share the price scale because that is how the contract computes them — a value is
+`amount × price ÷ 10^tokenDecimals`, so the value inherits the price's decimals. The scale comes from the
+event itself rather than a constant on our side, which is why `decimals` is reported per field instead of
+documented as "always 8".
+
+**`shortfall_value` above zero means the liquidation lost money.** The collateral was worth less than the
+debt plus bonus, so the liquidator paid more than they received. A bad-debt event, and worth surfacing.
+
+### Other fields
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `borrower`, `liquidator` | string | Lowercase addresses. Checksum them client-side for display |
+| `health_factor_before_bps` | number or null | The borrower's health factor immediately before, in basis points. `9099` means 0.9099 — below 1.0, which is why it was liquidatable |
+| `as_of` | object | As on `/transactions`: the indexer's last processed block, `null` until it has run |
+
+Paging is keyset on `(block_time, id)` with the same guarantee as `/transactions` — a `null` `next_cursor`
+genuinely means there is nothing more, because the query fetches one row beyond the page and drops it.
+
+### Errors
+
+| Status | Code | Cause |
+| --- | --- | --- |
+| 400 | `BAD_REQUEST` | `market` is not a well-formed `mkt_…` id — including a raw number or an id of another kind |
+| 400 | `BAD_REQUEST` | A `limit` that is not a non-negative whole number, or a `cursor` that did not come from us |
+
+A `market` id that is well-formed but matches no market returns **200 with an empty list**, not 404 — the
+filter simply selected nothing.
+
+---
+
+## GET /liquidations/{liquidationId}
+
+One liquidation receipt. Public.
+
+| Parameter | In | Notes |
+| --- | --- | --- |
+| `liquidationId` | path | A masked `liq_…` id from the history list |
+
+```bash
+curl -s http://localhost:8080/api/v1/liquidations/liq_5h74y4qafdaywxk7z64a
+```
+
+### Response — 200 OK
+
+**Byte-for-byte the same object as a history item** — one client type covers both. Every field comes from
+the `LiquidationExecuted` event, which was designed to carry all of it, so building a receipt never needs a
+follow-up call to the chain.
+
+```json
+{
+  "id": "liq_5h74y4qafdaywxk7z64a",
+  "borrower": "0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc",
+  "liquidator": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+  "debt_repaid": { "amount": "5100000000", "decimals": 6, "symbol": "USDC" },
+  "collateral_seized": { "amount": "1846551724137931035", "decimals": 18, "symbol": "WETH" },
+  "bonus_value": { "amount": "25500000000", "decimals": 8, "symbol": "USD" },
+  "shortfall_value": { "amount": "0", "decimals": 8, "symbol": "USD" },
+  "health_factor_before_bps": 9099,
+  "trigger_price": { "amount": "220000000000", "decimals": 8, "symbol": "USD" },
+  "tx_hash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+  "block": 4001,
+  "block_time": "2026-08-22T08:00:00Z"
+}
+```
+
+**There is no `as_of` here.** A receipt is a finished historical record, so reporting indexer progress
+alongside it would say nothing useful.
+
+### Errors
+
+| Status | Code | Cause |
+| --- | --- | --- |
+| 400 | `BAD_REQUEST` | The id is not a well-formed `liq_…` token, including a raw number or a `txn_…` id |
+| 404 | `NOT_FOUND` | No such liquidation |
+
+---
+
 # Planned
 
-All three depend on the indexer. Shapes below are the agreed contract.
+This one depends on the indexer and on live position data. The shape below is the agreed contract.
 
 ## GET /liquidations/eligible
 
@@ -434,23 +568,6 @@ debt plus bonus, so you would pay more than you receive. Filter these out unless
 
 **This list can be stale.** Always call `previewLiquidation` on the contract before submitting, and expect
 `PositionIsHealthy` sometimes — it means another liquidator got there first, or the price recovered.
-
----
-
-## GET /liquidations/history
-
-Completed liquidations, public. Cached ~15s. Same pagination as `eligible`. Each item adds `liquidator`,
-`tx_hash`, `block_time`, and the health factor before the liquidation.
-
----
-
-## GET /liquidations/{liquidationId}
-
-One liquidation receipt: debt repaid, collateral seized, bonus, health factor before, the trigger price and
-its decimals, and any shortfall. Cached ~60s.
-
-Every field comes from the `LiquidationExecuted` event, which was designed to carry all of it — so building
-a receipt never needs a follow-up call to the chain.
 
 ---
 
