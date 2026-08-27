@@ -1,5 +1,11 @@
 # Lending Platform
 
+![Current system overview](Current%20system%20overview.png)
+
+*The whole system as it stands today. Green is built and working, amber is code that exists but is not
+connected yet, grey dashed is not built. The red arrow is the indexer — the one missing link that is keeping
+six finished endpoints empty.*
+
 A crypto lending and borrowing app. Put money in to earn interest, or keep your ETH and borrow cash against it.
 
 This is a **pet project**. I am learning Solidity properly, so instead of writing a few toy contracts I am
