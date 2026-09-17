@@ -1,7 +1,6 @@
 import { UtilizationZone, ValueFormat } from "@/lib/enums";
 import { cn } from "@/lib/cn";
 import { formatValue } from "@/lib/format";
-import { utilizationModel } from "@/content/protocol";
 
 const fillClasses: Record<UtilizationZone, string> = {
   [UtilizationZone.BelowKink]: "bg-brand",
@@ -14,11 +13,12 @@ const zoneMessages: Record<UtilizationZone, string> = {
 };
 
 type UtilizationBarProps = {
+  current: number;
+  kink: number;
   className?: string;
 };
 
-export function UtilizationBar({ className }: UtilizationBarProps) {
-  const { current, kink } = utilizationModel;
+export function UtilizationBar({ current, kink, className }: UtilizationBarProps) {
   const zone = current < kink ? UtilizationZone.BelowKink : UtilizationZone.AboveKink;
   const currentPercent = current * 100;
   const kinkPercent = kink * 100;

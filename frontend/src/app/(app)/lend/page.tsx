@@ -8,7 +8,7 @@ import { Container } from "@/components/ui/Container";
 import { Section } from "@/components/ui/Section";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { PriceStalenessWarning } from "@/components/markets/PriceStalenessWarning";
-import { UtilizationBar } from "@/components/markets/UtilizationBar";
+import { MarketUtilization } from "@/components/markets/MarketUtilization";
 import { LendHeader } from "@/components/lend/LendHeader";
 import { LenderPositionCard } from "@/components/lend/LenderPositionCard";
 import { LendActionPanel } from "@/components/lend/LendActionPanel";
@@ -57,7 +57,7 @@ export default function LendPage() {
               <div className="grid gap-5 sm:grid-cols-2">
                 <SupplyApyCard />
                 <div className="rounded-card border border-line bg-surface p-6">
-                  <UtilizationBar />
+                  <MarketUtilization />
                 </div>
               </div>
             </div>

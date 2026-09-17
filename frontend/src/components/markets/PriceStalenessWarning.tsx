@@ -1,10 +1,14 @@
+"use client";
+
 import { BadgeTone, IconName, OracleStatus } from "@/lib/enums";
-import { oracleReading } from "@/content/protocol";
+import { useOraclePrice } from "@/hooks/useOraclePrice";
 import { Alert } from "@/components/ui/Alert";
 import { Container } from "@/components/ui/Container";
 
 export function PriceStalenessWarning() {
-  if (oracleReading.status !== OracleStatus.Stale) {
+  const { status } = useOraclePrice();
+
+  if (status !== OracleStatus.Stale) {
     return null;
   }
 
