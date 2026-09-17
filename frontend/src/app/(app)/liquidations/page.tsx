@@ -4,7 +4,6 @@ import { liquidationsPageContent } from "@/content/liquidations";
 import { Container } from "@/components/ui/Container";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
-import { PriceStalenessWarning } from "@/components/markets/PriceStalenessWarning";
 import { HowLiquidationWorksCallout } from "@/components/liquidations/HowLiquidationWorksCallout";
 import { LiquidationHistoryPanel } from "@/components/liquidations/LiquidationHistoryPanel";
 import { LiquidationsPanel } from "@/components/liquidations/LiquidationsPanel";
@@ -19,8 +18,6 @@ export default function LiquidationsPage() {
   return (
     <>
       <PageHeader title={liquidationsPageContent.title} description={liquidationsPageContent.description} />
-
-      <PriceStalenessWarning />
 
       <Section id={SectionId.LiquidationsList} tone={SectionTone.Canvas}>
         <h2 id={`${SectionId.LiquidationsList}-heading`} className="sr-only">
