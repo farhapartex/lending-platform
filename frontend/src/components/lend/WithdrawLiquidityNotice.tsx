@@ -1,15 +1,14 @@
 import { AssetSymbol, BadgeTone, IconName } from "@/lib/enums";
 import { formatTokenAmount } from "@/lib/token";
-import { depositedBalance, lendAssetDecimals, poolAvailableLiquidity } from "@/content/lend";
+import { lendAssetDecimals } from "@/content/lend";
 import { Alert } from "@/components/ui/Alert";
 
 type WithdrawLiquidityNoticeProps = {
   withdrawable: bigint;
+  isLiquidityConstrained: boolean;
 };
 
-export function WithdrawLiquidityNotice({ withdrawable }: WithdrawLiquidityNoticeProps) {
-  const isLiquidityConstrained = poolAvailableLiquidity < depositedBalance;
-
+export function WithdrawLiquidityNotice({ withdrawable, isLiquidityConstrained }: WithdrawLiquidityNoticeProps) {
   if (isLiquidityConstrained) {
     return (
       <Alert title="The pool cannot cover your full balance right now" tone={BadgeTone.Caution} icon={IconName.Warning}>

@@ -12,16 +12,8 @@ import {
 import { formatValue } from "@/lib/format";
 import { formatTokenAmount, minBigInt, parseTokenAmount, tokenAmountToUsd } from "@/lib/token";
 import { isBlockingValidation, validateLendAmount } from "@/lib/validation";
-import { assetPrices } from "@/content/protocol";
-import { usdcAllowance, walletBalances } from "@/content/wallet";
-import {
-  depositedBalance,
-  estimatedGasUsd,
-  lendAssetDecimals,
-  minimumDeposit,
-  poolAvailableLiquidity,
-  txFlowStatus,
-} from "@/content/lend";
+import { estimatedGasUsd, lendAssetDecimals, txFlowStatus } from "@/content/lend";
+import type { PositionView } from "@/hooks/usePositionView";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { TabBar } from "@/components/ui/TabBar";
@@ -41,23 +33,21 @@ const tabItems = [
   { value: LendTab.Withdraw, label: "Withdraw" },
 ];
 
-const walletBalance = walletBalances[AssetSymbol.Usdc];
-const unitPrice = assetPrices[AssetSymbol.Usdc];
-const withdrawable = minBigInt(depositedBalance, poolAvailableLiquidity);
-
-const depositMessages: Record<AmountValidationCode, string | null> = {
-  [AmountValidationCode.None]: null,
-  [AmountValidationCode.Empty]: null,
-  [AmountValidationCode.InvalidAmount]: "Enter an amount greater than zero.",
-  [AmountValidationCode.BelowMinimum]: `The minimum deposit is ${formatTokenAmount(minimumDeposit, lendAssetDecimals)} ${AssetSymbol.Usdc}. Smaller amounts are rejected to keep dust out of the pool.`,
-  [AmountValidationCode.ExceedsWalletBalance]: "That is more than your wallet holds.",
-  [AmountValidationCode.ExceedsDeposit]: null,
-  [AmountValidationCode.ExceedsAvailableLiquidity]: null,
-  [AmountValidationCode.ExceedsCollateral]: null,
-  [AmountValidationCode.ExceedsSafeWithdrawal]: null,
-  [AmountValidationCode.ExceedsBorrowLimit]: null,
-  [AmountValidationCode.ExceedsDebt]: null,
-};
+function depositMessagesFor(minimumDeposit: bigint): Record<AmountValidationCode, string | null> {
+  return {
+    [AmountValidationCode.None]: null,
+    [AmountValidationCode.Empty]: null,
+    [AmountValidationCode.InvalidAmount]: "Enter an amount greater than zero.",
+    [AmountValidationCode.BelowMinimum]: `The minimum deposit is ${formatTokenAmount(minimumDeposit, lendAssetDecimals)} ${AssetSymbol.Usdc}. Smaller amounts are rejected to keep dust out of the pool.`,
+    [AmountValidationCode.ExceedsWalletBalance]: "That is more than your wallet holds.",
+    [AmountValidationCode.ExceedsDeposit]: null,
+    [AmountValidationCode.ExceedsAvailableLiquidity]: null,
+    [AmountValidationCode.ExceedsCollateral]: null,
+    [AmountValidationCode.ExceedsSafeWithdrawal]: null,
+    [AmountValidationCode.ExceedsBorrowLimit]: null,
+    [AmountValidationCode.ExceedsDebt]: null,
+  };
+}
 
 const withdrawMessages: Record<AmountValidationCode, string | null> = {
   [AmountValidationCode.None]: null,
@@ -74,9 +64,20 @@ const withdrawMessages: Record<AmountValidationCode, string | null> = {
   [AmountValidationCode.ExceedsDebt]: null,
 };
 
-export function LendActionPanel() {
+type LendActionPanelProps = {
+  view: PositionView;
+};
+
+export function LendActionPanel({ view }: LendActionPanelProps) {
   const [tab, setTab] = useState(LendTab.Deposit);
   const [rawAmount, setRawAmount] = useState("");
+
+  const walletBalance = view.walletUsdc;
+  const unitPrice = view.debtPrice;
+  const depositedBalance = view.suppliedBalance;
+  const poolAvailableLiquidity = view.availableLiquidity;
+  const minimumDeposit = view.minDeposit;
+  const withdrawable = minBigInt(depositedBalance, poolAvailableLiquidity);
 
   const isDeposit = tab === LendTab.Deposit;
   const amount = parseTokenAmount(rawAmount, lendAssetDecimals);
@@ -91,10 +92,10 @@ export function LendActionPanel() {
         availableLiquidity: poolAvailableLiquidity,
         minimumDeposit,
       }),
-    [tab, amount],
+    [tab, amount, walletBalance, depositedBalance, poolAvailableLiquidity, minimumDeposit],
   );
 
-  const needsApproval = isDeposit && amount !== null && amount > usdcAllowance;
+  const needsApproval = isDeposit && amount !== null && amount > view.usdcAllowance;
   const hasBlockingError = isBlockingValidation(validation);
   const canSubmit = amount !== null && !hasBlockingError;
 
@@ -155,10 +156,13 @@ export function LendActionPanel() {
           <AmountValidationMessage
             id={validationMessageId}
             code={validation}
-            messages={isDeposit ? depositMessages : withdrawMessages}
+            messages={isDeposit ? depositMessagesFor(minimumDeposit) : withdrawMessages}
           />
 
-          {isDeposit ? null : <WithdrawLiquidityNotice withdrawable={withdrawable} />}
+          {isDeposit ? null : <WithdrawLiquidityNotice
+              withdrawable={withdrawable}
+              isLiquidityConstrained={poolAvailableLiquidity < depositedBalance}
+            />}
 
           {canSubmit ? <TxReviewSheet title="Review" rows={reviewRows} /> : null}
 

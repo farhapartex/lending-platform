@@ -33,7 +33,7 @@ export const lendPageContent = {
   description:
     "Deposit USDC and start earning immediately. Interest is added to your balance as it accrues, so there is nothing to claim and no lock-up.",
   positionTitle: "Your position",
-  positionDescription: "Principal and earned interest, shown separately so you can see exactly what the pool has paid you.",
+  positionDescription: "What you have in the pool right now, read straight from the chain, with interest already compounded into it.",
   actionTitle: "Deposit and withdraw",
   actionDescription: "Move funds in or out at any time, subject to the liquidity currently sitting in the pool.",
   marketTitle: "Market conditions",

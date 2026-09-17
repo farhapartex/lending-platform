@@ -1,13 +1,18 @@
 import { AssetSymbol, BadgeTone, SurfaceElevation, ValueFormat } from "@/lib/enums";
 import { formatValue } from "@/lib/format";
 import { formatTokenAmount } from "@/lib/token";
-import { supplyApyRate } from "@/content/protocol";
-import { lendAssetDecimals, lendPageContent, totalSupplied } from "@/content/lend";
+import { bpsToRatio } from "@/lib/units";
+import { lendAssetDecimals, lendPageContent } from "@/content/lend";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
 
-export function LendHeader() {
+type LendHeaderProps = {
+  supplyAprBps: bigint;
+  totalSupplied: bigint;
+};
+
+export function LendHeader({ supplyAprBps, totalSupplied }: LendHeaderProps) {
   return (
     <PageHeader
       title={lendPageContent.title}
@@ -19,7 +24,7 @@ export function LendHeader() {
             <div className="flex flex-col gap-1">
               <dt className="text-xs font-medium uppercase tracking-[0.08em] text-ink-faint">Supply APY</dt>
               <dd className="text-2xl font-semibold tracking-tight text-ink tabular-nums">
-                {formatValue(supplyApyRate, ValueFormat.Percent)}
+                {formatValue(bpsToRatio(supplyAprBps), ValueFormat.Percent)}
               </dd>
             </div>
             <div className="flex flex-col gap-1 border-t border-line pt-4">

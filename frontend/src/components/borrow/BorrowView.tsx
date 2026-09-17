@@ -1,6 +1,6 @@
 "use client";
 
-import { ButtonVariant, IconName, SectionId, SectionTone } from "@/lib/enums";
+import { ButtonVariant, IconName, SectionId, SectionTone, WalletGatePurpose } from "@/lib/enums";
 import { borrowPageContent } from "@/content/borrow";
 import { usePositionView } from "@/hooks/usePositionView";
 import { Button } from "@/components/ui/Button";
@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Section } from "@/components/ui/Section";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { WalletGate } from "@/components/app/WalletGate";
 import { BorrowHeader } from "@/components/borrow/BorrowHeader";
 import { CollateralPanel } from "@/components/borrow/CollateralPanel";
 import { DebtPanel } from "@/components/borrow/DebtPanel";
@@ -65,17 +66,21 @@ export function BorrowView() {
             {borrowPageContent.healthTitle}
           </h2>
 
-          <Card className="flex flex-col gap-6 p-6 sm:p-7">
-            <HealthScoreGauge factorBps={view.factorBps} tier={view.tier} />
-            <HealthBar
-              factorBps={view.factorBps}
-              tier={view.tier}
-              maxLtvBps={view.maxLtvBps}
-              liquidationThresholdBps={view.liquidationThresholdBps}
-            />
-          </Card>
+          <WalletGate purpose={WalletGatePurpose.PersonalData}>
+            <div className="flex flex-col gap-6">
+              <Card className="flex flex-col gap-6 p-6 sm:p-7">
+                <HealthScoreGauge factorBps={view.factorBps} tier={view.tier} />
+                <HealthBar
+                  factorBps={view.factorBps}
+                  tier={view.tier}
+                  maxLtvBps={view.maxLtvBps}
+                  liquidationThresholdBps={view.liquidationThresholdBps}
+                />
+              </Card>
 
-          <LiquidationRiskWarning tier={view.tier} />
+              <LiquidationRiskWarning tier={view.tier} />
+            </div>
+          </WalletGate>
 
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="flex flex-col gap-4">

@@ -2,9 +2,9 @@
 
 import { HealthTier } from "@/lib/enums";
 import { healthTier, priceScale } from "@/lib/health";
-import { isNoDebtHealthFactor } from "@/lib/units";
+import { isNoDebtHealthFactor, NO_DEBT_HEALTH_FACTOR } from "@/lib/units";
 import { recommendedLtvBps } from "@/content/protocol";
-import { useAccountData } from "@/hooks/useAccountData";
+import { useAccountData, type AccountData } from "@/hooks/useAccountData";
 import { useMarketData } from "@/hooks/useMarketData";
 import { useOraclePrice } from "@/hooks/useOraclePrice";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
@@ -13,6 +13,8 @@ import { useWalletState } from "@/hooks/useWalletState";
 export type PositionView = {
   collateralDeposited: bigint;
   debtOutstanding: bigint;
+  suppliedBalance: bigint;
+  totalSupplied: bigint;
   collateralValueScaled: bigint;
   debtValueScaled: bigint;
   collateralUnitPriceScaled: bigint;
@@ -53,6 +55,22 @@ function scaledPrice(price: bigint | undefined, decimals: number | undefined): b
   return (price * priceScale) / 10n ** BigInt(decimals);
 }
 
+const disconnectedAccount: AccountData = {
+  supplyShares: 0n,
+  supplyAssets: 0n,
+  collateralAmount: 0n,
+  collateralValue: 0n,
+  debtAmount: 0n,
+  debtValue: 0n,
+  healthFactorBps: NO_DEBT_HEALTH_FACTOR,
+  maxBorrowable: 0n,
+  maxWithdrawableCollateral: 0n,
+  collateralPrice: 0n,
+  priceUpdatedAt: 0n,
+  isLiquidatable: false,
+  priceStale: false,
+};
+
 export function usePositionView(): PositionViewResult {
   const { address } = useWalletState();
   const account = useAccountData(address);
@@ -61,12 +79,14 @@ export function usePositionView(): PositionViewResult {
   const debtPrice = useOraclePrice("debt");
   const balances = useTokenBalances(address);
 
+  const accountData = address === undefined ? disconnectedAccount : account.data;
+
   const isError = account.isError || market.isError || collateralPrice.isError || debtPrice.isError;
   const isLoading =
     account.isLoading || market.isLoading || collateralPrice.isLoading || debtPrice.isLoading || balances.isLoading;
 
   if (
-    account.data === undefined ||
+    accountData === undefined ||
     market.data === undefined ||
     collateralPrice.data === undefined ||
     debtPrice.data === undefined
@@ -83,15 +103,17 @@ export function usePositionView(): PositionViewResult {
   }
 
   const factorBps =
-    account.data.debtAmount <= 0n || isNoDebtHealthFactor(account.data.healthFactorBps)
+    accountData.debtAmount <= 0n || isNoDebtHealthFactor(accountData.healthFactorBps)
       ? null
-      : account.data.healthFactorBps;
+      : accountData.healthFactorBps;
 
   const view: PositionView = {
-    collateralDeposited: account.data.collateralAmount,
-    debtOutstanding: account.data.debtAmount,
-    collateralValueScaled: account.data.collateralValue,
-    debtValueScaled: account.data.debtValue,
+    collateralDeposited: accountData.collateralAmount,
+    debtOutstanding: accountData.debtAmount,
+    suppliedBalance: accountData.supplyAssets,
+    totalSupplied: market.data.totalSupplied,
+    collateralValueScaled: accountData.collateralValue,
+    debtValueScaled: accountData.debtValue,
     collateralUnitPriceScaled: scaledPrice(collateralPrice.data.price, collateralPrice.data.decimals),
     debtUnitPriceScaled: scaledPrice(debtPrice.data.price, debtPrice.data.decimals),
     collateralPrice: Number(collateralPrice.data.price) / 10 ** collateralPrice.data.decimals,
@@ -102,8 +124,8 @@ export function usePositionView(): PositionViewResult {
     recommendedLtvBps,
     availableLiquidity: market.data.availableLiquidity,
     minDeposit: market.data.minDeposit,
-    maxBorrowable: account.data.maxBorrowable,
-    maxWithdrawableCollateral: account.data.maxWithdrawableCollateral,
+    maxBorrowable: accountData.maxBorrowable,
+    maxWithdrawableCollateral: accountData.maxWithdrawableCollateral,
     walletWeth: balances.data?.walletWeth ?? 0n,
     walletUsdc: balances.data?.walletUsdc ?? 0n,
     wethAllowance: balances.data?.wethAllowance ?? 0n,
@@ -112,7 +134,7 @@ export function usePositionView(): PositionViewResult {
     supplyAprBps: market.data.supplyAprBps,
     factorBps,
     tier: healthTier(factorBps),
-    priceStale: account.data.priceStale,
+    priceStale: accountData.priceStale,
   };
 
   return {
