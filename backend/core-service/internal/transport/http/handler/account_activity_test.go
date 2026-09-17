@@ -1,8 +1,10 @@
 package handler_test
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -11,6 +13,7 @@ import (
 	"github.com/farhapartex/lending-platform/core-service/internal/domain"
 	"github.com/farhapartex/lending-platform/core-service/internal/transport/http/dto"
 	"github.com/farhapartex/lending-platform/core-service/internal/transport/http/handler"
+	"github.com/farhapartex/lending-platform/core-service/internal/transport/http/middleware"
 	"github.com/farhapartex/lending-platform/core-service/pkg/cursor"
 	"github.com/farhapartex/lending-platform/core-service/pkg/idmask"
 )
@@ -236,5 +239,20 @@ func TestGetActivityResponseIsJSON(t *testing.T) {
 
 	if contentType := recorder.Header().Get("Content-Type"); !contains(contentType, "application/json") {
 		t.Fatalf("expected a json content type, got %q", contentType)
+	}
+}
+
+func TestGetActivityReportsAnAbandonedRequestSeparatelyFromAFailure(t *testing.T) {
+	stub := &stubTransactionService{activityFailWith: fmt.Errorf("reading activity: %w", context.Canceled)}
+	engine, _ := newActivityRouter(t, stub)
+
+	recorder := performGet(engine, "/accounts/"+testAddress+"/activity")
+
+	if recorder.Code != middleware.StatusClientClosedRequest {
+		t.Fatalf("expected %d, got %d", middleware.StatusClientClosedRequest, recorder.Code)
+	}
+
+	if recorder.Body.Len() != 0 {
+		t.Fatalf("expected no body for a caller that has gone away, got %s", recorder.Body)
 	}
 }

@@ -7,6 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const StatusClientClosedRequest = 499
+
 func Logger(log *slog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
@@ -32,6 +34,8 @@ func Logger(log *slog.Logger) gin.HandlerFunc {
 		}
 
 		switch {
+		case c.Writer.Status() == StatusClientClosedRequest:
+			log.Info("request abandoned by the client", attrs...)
 		case c.Writer.Status() >= 500:
 			log.Error("request failed", attrs...)
 		case c.Writer.Status() >= 400:

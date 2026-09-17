@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -113,6 +114,8 @@ func (h *AccountHandler) maskTransactionID(id int64) (string, error) {
 
 func respondDomainError(c *gin.Context, err error, notFoundMessage string) {
 	switch {
+	case errors.Is(err, context.Canceled):
+		respondClientClosed(c)
 	case errors.Is(err, domain.ErrInvalidInput):
 		respondBadRequest(c, "That request could not be read.")
 	case errors.Is(err, domain.ErrNotFound):
@@ -120,6 +123,10 @@ func respondDomainError(c *gin.Context, err error, notFoundMessage string) {
 	default:
 		respondInternalError(c)
 	}
+}
+
+func respondClientClosed(c *gin.Context) {
+	c.AbortWithStatus(middleware.StatusClientClosedRequest)
 }
 
 func respondBadRequest(c *gin.Context, message string) {
