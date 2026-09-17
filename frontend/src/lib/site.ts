@@ -1,6 +1,6 @@
 import { AppRoute } from "@/lib/enums";
 
-export const siteName = "Lending Platform";
+export const siteName = "FUSD";
 
 export const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:5173";
 

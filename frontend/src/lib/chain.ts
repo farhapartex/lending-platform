@@ -14,7 +14,7 @@ export const appRpcUrl = process.env.NEXT_PUBLIC_RPC_URL ?? appChain.rpcUrls.def
 
 export const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "";
 
-export const appName = "Lending Platform";
+export const appName = "FUSD";
 
 function explorerBaseUrl(): string | undefined {
   return appChain.blockExplorers?.default.url;
