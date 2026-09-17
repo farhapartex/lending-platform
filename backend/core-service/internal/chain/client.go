@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/farhapartex/lending-platform/core-service/internal/domain"
@@ -143,4 +145,28 @@ func (c *Client) fetchChainID(ctx context.Context) (int64, error) {
 
 func (c *Client) withTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
 	return context.WithTimeout(ctx, c.requestTimeout)
+}
+
+func (c *Client) Logs(ctx context.Context, from uint64, to uint64, addresses []common.Address) ([]types.Log, error) {
+	if to < from {
+		return nil, fmt.Errorf("%w: block range %d to %d runs backwards", domain.ErrInvalidInput, from, to)
+	}
+
+	callCtx, cancel := c.withTimeout(ctx)
+	defer cancel()
+
+	query := ethereum.FilterQuery{
+		FromBlock: new(big.Int).SetUint64(from),
+		ToBlock:   new(big.Int).SetUint64(to),
+		Addresses: addresses,
+	}
+
+	logs, err := c.eth.FilterLogs(callCtx, query)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"%w: reading logs for blocks %d to %d failed: %s", domain.ErrChainUnreachable, from, to, err,
+		)
+	}
+
+	return logs, nil
 }
