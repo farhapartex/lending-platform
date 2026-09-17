@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -83,6 +84,8 @@ func run() error {
 		}
 	}
 
+	assets := loadAssetMetadata(ctx, stores, cfg)
+
 	router := transporthttp.NewRouter(transporthttp.RouterParams{
 		Config:             cfg,
 		Logger:             log,
@@ -90,6 +93,10 @@ func run() error {
 		TransactionService: stores.transactions,
 		LiquidationService: stores.liquidations,
 		Masker:             masker,
+		CollateralDecimals: assets.collateralDecimals,
+		CollateralSymbol:   assets.collateralSymbol,
+		DebtDecimals:       assets.debtDecimals,
+		DebtSymbol:         assets.debtSymbol,
 	})
 
 	server := &http.Server{
@@ -182,6 +189,8 @@ func buildStores(cfg config.Config, log *slog.Logger) (stores, func(), error) {
 		}),
 		liquidations: service.NewLiquidationService(service.LiquidationServiceParams{
 			Liquidations: repository.NewLiquidationRepository(db),
+			Positions:    repository.NewPositionRepository(db),
+			Users:        repository.NewUserRepository(db),
 			Checkpoints:  checkpoints,
 		}),
 	}
@@ -200,6 +209,16 @@ func startIndexer(ctx context.Context, cfg config.Config, built stores, log *slo
 	}
 
 	marketReader, err := chain.NewMarketReader(client.Eth(), chain.MarketReaderParams{
+		LensAddress:    cfg.Chain.Contracts.Lens,
+		RequestTimeout: cfg.Chain.RequestTimeout,
+	})
+	if err != nil {
+		client.Close()
+
+		return nil, err
+	}
+
+	accountReader, err := chain.NewAccountReader(client.Eth(), chain.MarketReaderParams{
 		LensAddress:    cfg.Chain.Contracts.Lens,
 		RequestTimeout: cfg.Chain.RequestTimeout,
 	})
@@ -234,6 +253,14 @@ func startIndexer(ctx context.Context, cfg config.Config, built stores, log *slo
 		return nil, err
 	}
 
+	tracker := indexer.NewPositionTracker(indexer.PositionTrackerParams{
+		ChainID:   cfg.Chain.ChainID,
+		Market:    market,
+		Accounts:  accountReader,
+		Users:     repository.NewUserRepository(built.db),
+		Positions: repository.NewPositionRepository(built.db),
+	})
+
 	runner := indexer.NewRunner(indexer.RunnerParams{
 		Chain:   cfg.Chain,
 		Client:  client,
@@ -247,10 +274,20 @@ func startIndexer(ctx context.Context, cfg config.Config, built stores, log *slo
 			Liquidations: repository.NewLiquidationRepository(built.db),
 		}),
 		Events:      repository.NewProtocolEventRepository(built.db),
+		Positions:   tracker,
 		Blocks:      repository.NewIndexedBlockRepository(built.db),
 		Checkpoints: repository.NewCheckpointRepository(built.db),
 		Logger:      log,
 	})
+
+	head, err := client.HeadBlock(ctx)
+	if err == nil {
+		if refreshed, backfillErr := tracker.Backfill(ctx, int64(head)); backfillErr != nil {
+			log.Warn("backfilling positions stopped early", slog.String("error", backfillErr.Error()))
+		} else if refreshed > 0 {
+			log.Info("valued the positions already on record", slog.Int("positions", refreshed))
+		}
+	}
 
 	go runner.Run(ctx)
 
@@ -261,4 +298,43 @@ func startIndexer(ctx context.Context, cfg config.Config, built stores, log *slo
 	)
 
 	return client.Close, nil
+}
+
+type assetMetadata struct {
+	collateralDecimals int16
+	collateralSymbol   string
+	debtDecimals       int16
+	debtSymbol         string
+}
+
+func loadAssetMetadata(ctx context.Context, built stores, cfg config.Config) assetMetadata {
+	fallback := assetMetadata{
+		collateralDecimals: 18,
+		collateralSymbol:   "WETH",
+		debtDecimals:       6,
+		debtSymbol:         "USDC",
+	}
+
+	if built.db == nil {
+		return fallback
+	}
+
+	assets := repository.NewAssetRepository(built.db)
+
+	collateral, err := assets.ByAddress(ctx, cfg.Chain.ChainID, strings.ToLower(cfg.Chain.Contracts.CollateralToken))
+	if err != nil {
+		return fallback
+	}
+
+	debt, err := assets.ByAddress(ctx, cfg.Chain.ChainID, strings.ToLower(cfg.Chain.Contracts.DebtToken))
+	if err != nil {
+		return fallback
+	}
+
+	return assetMetadata{
+		collateralDecimals: collateral.Decimals,
+		collateralSymbol:   collateral.Symbol,
+		debtDecimals:       debt.Decimals,
+		debtSymbol:         debt.Symbol,
+	}
 }

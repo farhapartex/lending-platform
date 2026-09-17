@@ -38,6 +38,10 @@ func (s *stubUsers) ByAddress(_ context.Context, address string) (domain.User, e
 	return user, nil
 }
 
+func (s *stubUsers) ListAddresses(_ context.Context, _ int) ([]string, error) {
+	return nil, nil
+}
+
 func (s *stubUsers) EnsureByAddress(context.Context, int64, string) (domain.User, error) {
 	return domain.User{}, errors.New("not expected in these tests")
 }

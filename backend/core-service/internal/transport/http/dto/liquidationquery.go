@@ -1,12 +1,18 @@
 package dto
 
 import (
+	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/farhapartex/lending-platform/core-service/internal/domain"
+	"github.com/farhapartex/lending-platform/core-service/pkg/ethaddr"
 )
 
-const ParamMarket = "market"
+const (
+	ParamMarket   = "market"
+	ParamBorrower = "borrower"
+)
 
 func ParseLiquidationListRequest(
 	marketID *int64,
@@ -22,9 +28,23 @@ func ParseLiquidationListRequest(
 		return domain.LiquidationListRequest{}, err
 	}
 
+	borrower := strings.TrimSpace(values.Get(ParamBorrower))
+
+	if borrower != "" {
+		normalized, err := ethaddr.Normalize(borrower)
+		if err != nil {
+			return domain.LiquidationListRequest{}, fmt.Errorf(
+				"%w: %s is not a usable address", domain.ErrInvalidInput, ParamBorrower,
+			)
+		}
+
+		borrower = normalized
+	}
+
 	return domain.LiquidationListRequest{
-		MarketID: marketID,
-		After:    after,
-		Limit:    limit,
+		MarketID:        marketID,
+		BorrowerAddress: borrower,
+		After:           after,
+		Limit:           limit,
 	}, nil
 }

@@ -21,6 +21,7 @@ type RunnerParams struct {
 	Decoder     *Decoder
 	Ingestor    *Ingestor
 	Events      domain.ProtocolEventRepository
+	Positions   *PositionTracker
 	Blocks      domain.IndexedBlockRepository
 	Checkpoints domain.CheckpointRepository
 	Logger      *slog.Logger
@@ -107,6 +108,7 @@ func (r *Runner) Tick(ctx context.Context) error {
 	})
 
 	blockTimes := map[uint64]time.Time{}
+	touched := map[string]int64{}
 	applied := 0
 
 	for _, log := range logs {
@@ -124,7 +126,17 @@ func (r *Runner) Tick(ctx context.Context) error {
 			return err
 		}
 
+		touched[event.Actor] = int64(event.BlockNumber)
+
+		if event.Liquidation != nil {
+			touched[event.Liquidation.Liquidator] = int64(event.BlockNumber)
+		}
+
 		applied++
+	}
+
+	if err := r.refreshPositions(ctx, touched); err != nil {
+		return err
 	}
 
 	if err := r.recordProgress(ctx, &checkpoint, to); err != nil {
@@ -138,6 +150,24 @@ func (r *Runner) Tick(ctx context.Context) error {
 			slog.Uint64("to_block", to),
 			slog.Int("events", applied),
 		)
+	}
+
+	return nil
+}
+
+func (r *Runner) refreshPositions(ctx context.Context, touched map[string]int64) error {
+	if r.params.Positions == nil {
+		return nil
+	}
+
+	for address, atBlock := range touched {
+		if err := r.params.Positions.Refresh(ctx, address, atBlock); err != nil {
+			r.params.Logger.Warn(
+				"a position could not be refreshed",
+				slog.String("address", address),
+				slog.String("error", err.Error()),
+			)
+		}
 	}
 
 	return nil

@@ -15,6 +15,10 @@ import (
 func addCheckpoint(t *testing.T, tx *gorm.DB, stream string, block int64) domain.IndexerCheckpoint {
 	t.Helper()
 
+	if err := tx.Where("stream_name = ?", stream).Delete(&domain.IndexerCheckpoint{}).Error; err != nil {
+		t.Fatalf("could not clear the stream before seeding it: %v", err)
+	}
+
 	checkpoint := domain.IndexerCheckpoint{
 		StreamName:            stream,
 		ChainID:               testChainID,

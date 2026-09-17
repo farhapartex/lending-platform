@@ -23,6 +23,10 @@ type RouterParams struct {
 	TransactionService domain.TransactionService
 	LiquidationService domain.LiquidationService
 	Masker             *idmask.Masker
+	CollateralDecimals int16
+	CollateralSymbol   string
+	DebtDecimals       int16
+	DebtSymbol         string
 }
 
 func NewRouter(params RouterParams) *gin.Engine {
@@ -74,10 +78,15 @@ func registerLiquidationRoutes(group *gin.RouterGroup, params RouterParams) {
 	}
 
 	liquidations := handler.NewLiquidationHandler(handler.LiquidationHandlerParams{
-		Liquidations: params.LiquidationService,
-		Masker:       params.Masker,
+		Liquidations:       params.LiquidationService,
+		Masker:             params.Masker,
+		CollateralDecimals: params.CollateralDecimals,
+		CollateralSymbol:   params.CollateralSymbol,
+		DebtDecimals:       params.DebtDecimals,
+		DebtSymbol:         params.DebtSymbol,
 	})
 
+	group.GET("/liquidations/eligible", liquidations.ListEligible)
 	group.GET("/liquidations/history", liquidations.ListHistory)
 	group.GET("/liquidations/:liquidationId", liquidations.GetReceipt)
 }

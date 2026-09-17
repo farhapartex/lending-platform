@@ -62,12 +62,13 @@ type IndexedBlockRepository interface {
 
 type PositionRepository interface {
 	Upsert(ctx context.Context, position *Position) error
-	Liquidatable(ctx context.Context, marketID int64, limit int) ([]Position, error)
+	Liquidatable(ctx context.Context, marketID *int64, limit int) ([]Position, error)
 }
 
 type UserRepository interface {
 	ByAddress(ctx context.Context, address string) (User, error)
 	EnsureByAddress(ctx context.Context, chainID int64, address string) (User, error)
+	ListAddresses(ctx context.Context, limit int) ([]string, error)
 }
 
 type MarketSnapshotRepository interface {

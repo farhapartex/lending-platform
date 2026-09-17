@@ -70,3 +70,19 @@ func (r *userRepository) EnsureByAddress(
 
 	return user, nil
 }
+
+func (r *userRepository) ListAddresses(ctx context.Context, limit int) ([]string, error) {
+	addresses := make([]string, 0)
+
+	statement := r.db.WithContext(ctx).
+		Model(&domain.User{}).
+		Order("id ASC").
+		Limit(boundedLimit(limit, 500, 5_000)).
+		Pluck("address", &addresses)
+
+	if statement.Error != nil {
+		return nil, translate(statement.Error, "user addresses")
+	}
+
+	return addresses, nil
+}

@@ -184,11 +184,21 @@ func (r *positionRepository) Upsert(ctx context.Context, position *domain.Positi
 	return nil
 }
 
-func (r *positionRepository) Liquidatable(ctx context.Context, marketID int64, limit int) ([]domain.Position, error) {
+func (r *positionRepository) Liquidatable(
+	ctx context.Context,
+	marketID *int64,
+	limit int,
+) ([]domain.Position, error) {
 	positions := make([]domain.Position, 0, boundedLimit(limit, 25, 100))
 
 	statement := r.db.WithContext(ctx).
-		Where("market_id = ? AND is_liquidatable = TRUE AND debt_scaled > 0", marketID).
+		Where("is_liquidatable = TRUE AND debt_scaled > 0")
+
+	if marketID != nil {
+		statement = statement.Where("market_id = ?", *marketID)
+	}
+
+	statement = statement.
 		Order("health_factor_bps ASC, id ASC").
 		Limit(boundedLimit(limit, 25, 100)).
 		Preload("User").

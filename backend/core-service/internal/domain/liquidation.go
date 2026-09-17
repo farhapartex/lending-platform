@@ -37,15 +37,17 @@ func (Liquidation) TableName() string {
 }
 
 type LiquidationQuery struct {
-	MarketID *int64
-	After    cursor.Key
-	Limit    int
+	MarketID   *int64
+	BorrowerID *int64
+	After      cursor.Key
+	Limit      int
 }
 
 type LiquidationListRequest struct {
-	MarketID *int64
-	After    cursor.Key
-	Limit    int
+	MarketID        *int64
+	BorrowerAddress string
+	After           cursor.Key
+	Limit           int
 }
 
 type LiquidationPage struct {
@@ -60,7 +62,23 @@ type LiquidationRepository interface {
 	Insert(ctx context.Context, liquidation *Liquidation) error
 }
 
+type EligiblePosition struct {
+	Position Position
+	Borrower User
+}
+
+type EligibleRequest struct {
+	MarketID *int64
+	Limit    int
+}
+
+type EligiblePage struct {
+	Items []EligiblePosition
+	AsOf  IndexedAt
+}
+
 type LiquidationService interface {
 	List(ctx context.Context, request LiquidationListRequest) (LiquidationPage, error)
 	ByID(ctx context.Context, id int64) (Liquidation, error)
+	Eligible(ctx context.Context, request EligibleRequest) (EligiblePage, error)
 }

@@ -27,6 +27,10 @@ type stubLiquidationService struct {
 	lastID       int64
 	listCount    int
 	byIDCount    int
+
+	eligible         domain.EligiblePage
+	eligibleFailWith error
+	lastEligible     domain.EligibleRequest
 }
 
 func (s *stubLiquidationService) List(
@@ -41,6 +45,19 @@ func (s *stubLiquidationService) List(
 	}
 
 	return s.page, nil
+}
+
+func (s *stubLiquidationService) Eligible(
+	_ context.Context,
+	request domain.EligibleRequest,
+) (domain.EligiblePage, error) {
+	s.lastEligible = request
+
+	if s.eligibleFailWith != nil {
+		return domain.EligiblePage{}, s.eligibleFailWith
+	}
+
+	return s.eligible, nil
 }
 
 func (s *stubLiquidationService) ByID(_ context.Context, id int64) (domain.Liquidation, error) {

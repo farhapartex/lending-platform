@@ -12,20 +12,66 @@ import (
 )
 
 type LiquidationHandlerParams struct {
-	Liquidations domain.LiquidationService
-	Masker       *idmask.Masker
+	Liquidations       domain.LiquidationService
+	Masker             *idmask.Masker
+	CollateralDecimals int16
+	CollateralSymbol   string
+	DebtDecimals       int16
+	DebtSymbol         string
 }
 
 type LiquidationHandler struct {
-	liquidations domain.LiquidationService
-	masker       *idmask.Masker
+	liquidations       domain.LiquidationService
+	masker             *idmask.Masker
+	collateralDecimals int16
+	collateralSymbol   string
+	debtDecimals       int16
+	debtSymbol         string
 }
 
 func NewLiquidationHandler(params LiquidationHandlerParams) *LiquidationHandler {
 	return &LiquidationHandler{
-		liquidations: params.Liquidations,
-		masker:       params.Masker,
+		liquidations:       params.Liquidations,
+		masker:             params.Masker,
+		collateralDecimals: params.CollateralDecimals,
+		collateralSymbol:   params.CollateralSymbol,
+		debtDecimals:       params.DebtDecimals,
+		debtSymbol:         params.DebtSymbol,
 	}
+}
+
+func (h *LiquidationHandler) ListEligible(c *gin.Context) {
+	marketID, err := h.marketFilter(c)
+	if err != nil {
+		respondBadRequest(c, "That market identifier is not valid.")
+
+		return
+	}
+
+	limit, err := dto.ParseLimit(c.Request.URL.Query())
+	if err != nil {
+		respondBadRequest(c, queryparam.Message(err))
+
+		return
+	}
+
+	page, err := h.liquidations.Eligible(c.Request.Context(), domain.EligibleRequest{
+		MarketID: marketID,
+		Limit:    limit,
+	})
+	if err != nil {
+		respondDomainError(c, err, "There are no positions to show.")
+
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.NewEligibleListResponse(
+		page,
+		h.collateralDecimals,
+		h.collateralSymbol,
+		h.debtDecimals,
+		h.debtSymbol,
+	))
 }
 
 func (h *LiquidationHandler) ListHistory(c *gin.Context) {

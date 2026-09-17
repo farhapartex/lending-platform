@@ -47,6 +47,10 @@ func (r *liquidationRepository) List(
 		statement = statement.Where("market_id = ?", *query.MarketID)
 	}
 
+	if query.BorrowerID != nil {
+		statement = statement.Where("borrower_user_id = ?", *query.BorrowerID)
+	}
+
 	statement = applyKeysetCursor(statement, query.After)
 
 	result := statement.
