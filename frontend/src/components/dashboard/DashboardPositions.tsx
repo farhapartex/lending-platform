@@ -1,6 +1,6 @@
 "use client";
 
-import { AppRoute, AssetSymbol, ButtonVariant, IconName, SectionId } from "@/lib/enums";
+import { AppRoute, AssetSymbol, BadgeTone, ButtonVariant, IconName, SectionId } from "@/lib/enums";
 import { healthTier, toPriceScaled, toValueScaled } from "@/lib/health";
 import { isNoDebtHealthFactor } from "@/lib/units";
 import { dashboardContent } from "@/content/dashboard";
@@ -9,6 +9,7 @@ import { useAccountData } from "@/hooks/useAccountData";
 import { useMarketData } from "@/hooks/useMarketData";
 import { useOraclePrice } from "@/hooks/useOraclePrice";
 import { useWalletState } from "@/hooks/useWalletState";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -79,7 +80,9 @@ export function DashboardPositions() {
 
   const debtPriceScaled = debtPrice.data === undefined ? fallbackDebtPriceScaled : debtPrice.data.price;
   const suppliedValueScaled = toValueScaled(data.supplyAssets, debtDecimals, debtPriceScaled);
-  const factorBps = data.debtAmount <= 0n || isNoDebtHealthFactor(data.healthFactorBps) ? null : data.healthFactorBps;
+  const isValued = !data.priceStale;
+  const factorBps =
+    !isValued || data.debtAmount <= 0n || isNoDebtHealthFactor(data.healthFactorBps) ? null : data.healthFactorBps;
   const tier = healthTier(factorBps);
 
   return (
@@ -90,8 +93,16 @@ export function DashboardPositions() {
         debtValueScaled={data.debtValue}
       />
 
-      <LiquidationRiskWarning tier={tier} />
+      {isValued ? null : (
+        <Alert title="We cannot value your position right now" tone={BadgeTone.Caution} icon={IconName.Warning}>
+          The WETH price feed has not reported recently, so your safety score cannot be calculated. Your collateral and
+          loan are untouched, and nothing can be liquidated at a price the protocol does not trust.
+        </Alert>
+      )}
 
+      {isValued ? <LiquidationRiskWarning tier={tier} /> : null}
+
+      {isValued ? (
       <Card className="grid gap-8 p-6 sm:p-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
         <div className="flex flex-col gap-6">
           <HealthScoreGauge factorBps={factorBps} tier={tier} />
@@ -106,6 +117,7 @@ export function DashboardPositions() {
           <RiskLegend />
         </div>
       </Card>
+      ) : null}
 
       <div className="flex flex-col gap-4">
         <h3 id={`${SectionId.DashboardPositions}-heading`} className="text-lg font-semibold tracking-tight text-ink">

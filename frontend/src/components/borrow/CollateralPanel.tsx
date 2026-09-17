@@ -5,8 +5,10 @@ import { AmountValidationCode, AssetSymbol, ButtonSize, CollateralTab, StepState
 import { healthFactorBps, healthTier, toValueScaled } from "@/lib/health";
 import { formatTokenAmount, parseTokenAmount } from "@/lib/token";
 import { isBlockingValidation, validateCollateralAmount } from "@/lib/validation";
-import { collateralDecimals, estimatedGasUsd, txFlowStatus } from "@/content/borrow";
+import { collateralDecimals, estimatedGasUsd } from "@/content/borrow";
 import type { PositionView } from "@/hooks/usePositionView";
+import { useProtocolContracts } from "@/hooks/useProtocolContracts";
+import { useTxFlow, type TxStep } from "@/hooks/useTxFlow";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { TabBar } from "@/components/ui/TabBar";
@@ -49,6 +51,7 @@ type CollateralPanelProps = {
 export function CollateralPanel({ view }: CollateralPanelProps) {
   const [tab, setTab] = useState(CollateralTab.Deposit);
   const [rawAmount, setRawAmount] = useState("");
+  const { contracts } = useProtocolContracts();
 
   const isDeposit = tab === CollateralTab.Deposit;
   const amount = parseTokenAmount(rawAmount, collateralDecimals);
@@ -76,6 +79,32 @@ export function CollateralPanel({ view }: CollateralPanelProps) {
   const nextFactor = healthFactorBps(nextCollateralValue, view.debtValueScaled, view.liquidationThresholdBps);
   const nextTier = healthTier(nextFactor);
 
+  const approval: TxStep | null =
+    contracts === null || !isDeposit || amount === null || amount <= view.wethAllowance
+      ? null
+      : {
+          address: contracts.collateralToken.address,
+          abi: contracts.collateralToken.abi,
+          functionName: "approve",
+          args: [contracts.vault.address, amount],
+        };
+
+  const action: TxStep | null =
+    contracts === null || amount === null
+      ? null
+      : {
+          address: contracts.vault.address,
+          abi: contracts.vault.abi,
+          functionName: isDeposit ? "depositCollateral" : "withdrawCollateral",
+          args: [amount],
+        };
+
+  const tx = useTxFlow({
+    approval,
+    action,
+    onConfirmed: () => setRawAmount(""),
+  });
+
   const reviewRows = [
     {
       label: isDeposit ? "You add" : "You withdraw",
@@ -102,6 +131,7 @@ export function CollateralPanel({ view }: CollateralPanelProps) {
         <TabBar items={tabItems} active={tab} label="Add or withdraw collateral" onChange={(value) => {
           setTab(value);
           setRawAmount("");
+          tx.reset();
         }} />
       </div>
 
@@ -155,10 +185,20 @@ export function CollateralPanel({ view }: CollateralPanelProps) {
             />
           ) : null}
 
-          <TxStatusTracker status={txFlowStatus} />
+          <TxStatusTracker
+            status={tx.status}
+            approvalAsset={AssetSymbol.Weth}
+            approvalSpender="collateral vault"
+            confirmedMessage={
+              isDeposit
+                ? "Your collateral is in the vault and your borrowing power has gone up."
+                : "Your collateral is back in your wallet."
+            }
+            errorMessage={tx.error}
+          />
 
-          <Button size={ButtonSize.Lg} fullWidth disabled={!canSubmit}>
-            {isDeposit ? "Add collateral" : "Withdraw collateral"}
+          <Button size={ButtonSize.Lg} fullWidth disabled={!canSubmit || tx.isBusy} onClick={tx.submit}>
+            {tx.isBusy ? "Working" : isDeposit ? "Add collateral" : "Withdraw collateral"}
           </Button>
         </div>
       </WalletGate>

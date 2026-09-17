@@ -1,8 +1,9 @@
 "use client";
 
-import { ButtonVariant, IconName, SectionId, SectionTone, WalletGatePurpose } from "@/lib/enums";
+import { BadgeTone, ButtonVariant, IconName, SectionId, SectionTone, WalletGatePurpose } from "@/lib/enums";
 import { borrowPageContent } from "@/content/borrow";
 import { usePositionView } from "@/hooks/usePositionView";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -67,6 +68,7 @@ export function BorrowView() {
           </h2>
 
           <WalletGate purpose={WalletGatePurpose.PersonalData}>
+            {view.isValued ? (
             <div className="flex flex-col gap-6">
               <Card className="flex flex-col gap-6 p-6 sm:p-7">
                 <HealthScoreGauge factorBps={view.factorBps} tier={view.tier} />
@@ -80,6 +82,13 @@ export function BorrowView() {
 
               <LiquidationRiskWarning tier={view.tier} />
             </div>
+            ) : (
+              <Alert title="We cannot value your position right now" tone={BadgeTone.Caution} icon={IconName.Warning}>
+                The WETH price feed has not reported recently, so your safety score cannot be calculated. Your
+                collateral and loan are untouched, and the protocol refuses to borrow against or release collateral at
+                a price it cannot trust. Repaying still works.
+              </Alert>
+            )}
           </WalletGate>
 
           <div className="grid gap-6 lg:grid-cols-2">

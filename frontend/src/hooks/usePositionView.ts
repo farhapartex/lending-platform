@@ -38,6 +38,7 @@ export type PositionView = {
   factorBps: bigint | null;
   tier: HealthTier;
   priceStale: boolean;
+  isValued: boolean;
 };
 
 export type PositionViewResult = {
@@ -102,8 +103,10 @@ export function usePositionView(): PositionViewResult {
     };
   }
 
+  const isValued = !accountData.priceStale;
+
   const factorBps =
-    accountData.debtAmount <= 0n || isNoDebtHealthFactor(accountData.healthFactorBps)
+    !isValued || accountData.debtAmount <= 0n || isNoDebtHealthFactor(accountData.healthFactorBps)
       ? null
       : accountData.healthFactorBps;
 
@@ -135,6 +138,7 @@ export function usePositionView(): PositionViewResult {
     factorBps,
     tier: healthTier(factorBps),
     priceStale: accountData.priceStale,
+    isValued,
   };
 
   return {
