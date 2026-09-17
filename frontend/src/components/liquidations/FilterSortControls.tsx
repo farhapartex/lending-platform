@@ -2,7 +2,6 @@
 
 import { LiquidationSortKey } from "@/lib/enums";
 import { Dropdown } from "@/components/ui/Dropdown";
-import { AutoRefreshIndicator } from "@/components/liquidations/AutoRefreshIndicator";
 
 const sortOptions = [
   { value: LiquidationSortKey.Health, label: "Closest to liquidation" },
@@ -23,7 +22,7 @@ export function FilterSortControls({ sortKey, onSortChange, visibleCount }: Filt
         <span className="text-sm font-medium text-ink">
           {visibleCount} {visibleCount === 1 ? "position" : "positions"} eligible
         </span>
-        <AutoRefreshIndicator />
+        <p className="text-xs text-ink-faint">Example positions, until past events have been indexed.</p>
       </div>
 
       <Dropdown

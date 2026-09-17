@@ -60,8 +60,8 @@ export default function LiquidationsPage() {
 
       <Container className="pb-4">
         <p className="text-xs text-ink-faint">
-          This list is built from indexed contract events. Eligibility is always re-checked on-chain when a liquidation
-          runs.
+          These lists are rebuilt from indexed contract events. Eligibility is always re-checked on-chain when a
+          liquidation runs, so a position that recovers in the meantime cannot be liquidated.
         </p>
       </Container>
     </>

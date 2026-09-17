@@ -11,10 +11,11 @@ import {
   WalletStatus,
 } from "@/lib/enums";
 import { useWalletState } from "@/hooks/useWalletState";
+import { useTokenBalances } from "@/hooks/useTokenBalances";
 import { WalletGate } from "@/components/app/WalletGate";
 import { formatTokenAmount } from "@/lib/token";
 import { debtDecimals } from "@/content/protocol";
-import { estimatedGasUsd, liquidatorUsdcBalance, txFlowStatus } from "@/content/liquidations";
+import { estimatedGasUsd, txFlowStatus } from "@/content/liquidations";
 import type { LiquidationRow } from "@/lib/liquidation";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
@@ -33,20 +34,26 @@ type LiquidateModalProps = {
 };
 
 export function LiquidateModal({ row, onClose }: LiquidateModalProps) {
-  const { status: walletStatus } = useWalletState();
+  const { status: walletStatus, address } = useWalletState();
+  const balances = useTokenBalances(address);
 
   if (row === null) {
     return null;
   }
 
-  const canAfford = liquidatorUsdcBalance >= row.debtAmount;
+  const liquidatorUsdcBalance = balances.data?.walletUsdc ?? 0n;
   const isConnected = walletStatus === WalletStatus.Connected;
+  const hasBalance = balances.data !== undefined;
+  const canAfford = !isConnected || !hasBalance || liquidatorUsdcBalance >= row.debtAmount;
+  const needsApproval = hasBalance && (balances.data?.usdcAllowance ?? 0n) < row.debtAmount;
 
   const reviewRows = [
     { label: "Estimated network gas", value: estimatedGasUsd },
     {
       label: "Your USDC balance",
-      value: `${formatTokenAmount(liquidatorUsdcBalance, debtDecimals, 2)} ${AssetSymbol.Usdc}`,
+      value: hasBalance
+        ? `${formatTokenAmount(liquidatorUsdcBalance, debtDecimals, 2)} ${AssetSymbol.Usdc}`
+        : "Connect a wallet",
     },
   ];
 
@@ -92,20 +99,22 @@ export function LiquidateModal({ row, onClose }: LiquidateModalProps) {
               </Alert>
             )}
 
-            <ApprovalStep
-              steps={[
-                {
-                  label: `Approve ${AssetSymbol.Usdc}`,
-                  description: "A one-time permission letting the pool collect your repayment.",
-                  state: StepState.Active,
-                },
-                {
-                  label: "Liquidate",
-                  description: "Repays the loan and transfers the collateral, plus your bonus, to you.",
-                  state: StepState.Upcoming,
-                },
-              ]}
-            />
+            {needsApproval ? (
+              <ApprovalStep
+                steps={[
+                  {
+                    label: `Approve ${AssetSymbol.Usdc}`,
+                    description: "A one-time permission letting the pool collect your repayment.",
+                    state: StepState.Active,
+                  },
+                  {
+                    label: "Liquidate",
+                    description: "Repays the loan and transfers the collateral, plus your bonus, to you.",
+                    state: StepState.Upcoming,
+                  },
+                ]}
+              />
+            ) : null}
 
             <TxReviewSheet title="Costs" rows={reviewRows} />
 
