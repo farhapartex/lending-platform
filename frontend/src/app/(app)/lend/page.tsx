@@ -10,7 +10,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { PriceStalenessWarning } from "@/components/markets/PriceStalenessWarning";
 import { MarketUtilization } from "@/components/markets/MarketUtilization";
 import { LendHeader } from "@/components/lend/LendHeader";
-import { LenderPositionCard } from "@/components/lend/LenderPositionCard";
+import { LenderPosition } from "@/components/lend/LenderPosition";
 import { LendActionPanel } from "@/components/lend/LendActionPanel";
 import { SupplyApyCard } from "@/components/lend/SupplyApyCard";
 
@@ -46,7 +46,7 @@ export default function LendPage() {
                 title={lendPageContent.positionTitle}
                 description={lendPageContent.positionDescription}
               />
-              <LenderPositionCard />
+              <LenderPosition />
             </div>
 
             <div className="flex flex-col gap-4">

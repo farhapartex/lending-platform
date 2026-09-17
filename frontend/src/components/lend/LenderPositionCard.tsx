@@ -1,12 +1,15 @@
 import { AppRoute, AssetSymbol, ButtonVariant, IconName, SurfaceElevation } from "@/lib/enums";
 import { formatTokenAmount } from "@/lib/token";
-import { accruedInterest, depositedBalance, depositedPrincipal, lendAssetDecimals } from "@/content/lend";
+import { lendAssetDecimals } from "@/content/lend";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LiveInterestCounter } from "@/components/lend/LiveInterestCounter";
 
-export function LenderPositionCard() {
+type LenderPositionCardProps = {
+  depositedBalance: bigint;
+};
+
+export function LenderPositionCard({ depositedBalance }: LenderPositionCardProps) {
   if (depositedBalance <= 0n) {
     return (
       <EmptyState
@@ -31,21 +34,10 @@ export function LenderPositionCard() {
         </span>
       </div>
 
-      <dl className="grid gap-5 border-t border-line pt-5 sm:grid-cols-2">
-        <div className="flex flex-col gap-1">
-          <dt className="text-sm text-ink-soft">Principal deposited</dt>
-          <dd className="text-lg font-semibold text-ink tabular-nums">
-            {formatTokenAmount(depositedPrincipal, lendAssetDecimals, 2)} {AssetSymbol.Usdc}
-          </dd>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <dt className="text-sm text-ink-soft">Interest earned</dt>
-          <dd className="text-lg font-semibold text-mint-ink">
-            <LiveInterestCounter baseInterest={accruedInterest} balance={depositedBalance} />
-          </dd>
-        </div>
-      </dl>
+      <p className="border-t border-line pt-5 text-sm leading-relaxed text-ink-soft">
+        This balance already includes the interest you have earned. The split between your principal and that
+        interest needs your deposit history, which arrives with event indexing.
+      </p>
     </Card>
   );
 }

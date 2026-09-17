@@ -37,14 +37,17 @@ export function oracleStatusFrom(reading: OraclePrice | undefined): OracleStatus
   return reading.isStale ? OracleStatus.Stale : OracleStatus.Fresh;
 }
 
-export function useOraclePrice(): OraclePriceResult {
+export type OracleAsset = "collateral" | "debt";
+
+export function useOraclePrice(asset: OracleAsset = "collateral"): OraclePriceResult {
   const { chainId, contracts, isSupported } = useProtocolContracts();
+  const token = asset === "debt" ? contracts?.debtToken.address : contracts?.collateralToken.address;
 
   const priceQuery = useReadContract({
     address: contracts?.oracle.address,
     abi: contracts?.oracle.abi,
     functionName: "readPrice",
-    args: contracts === null ? undefined : [contracts.collateralToken.address],
+    args: token === undefined ? undefined : [token],
     chainId,
     query: {
       enabled: isSupported,

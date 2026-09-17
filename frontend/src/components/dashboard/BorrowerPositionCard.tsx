@@ -2,7 +2,7 @@ import { AppRoute, AssetSymbol, ButtonSize, ButtonVariant, HealthTier, IconName,
 import { formatValue } from "@/lib/format";
 import { formatHealthFactor, scaledValueToUsd } from "@/lib/health";
 import { formatTokenAmount } from "@/lib/token";
-import { collateralDecimals, collateralDeposited, debtDecimals, debtOutstanding } from "@/content/borrow";
+import { collateralDecimals, debtDecimals } from "@/content/protocol";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -12,9 +12,17 @@ type BorrowerPositionCardProps = {
   factorBps: bigint | null;
   tier: HealthTier;
   collateralValueScaled: bigint;
+  collateralDeposited: bigint;
+  debtOutstanding: bigint;
 };
 
-export function BorrowerPositionCard({ factorBps, tier, collateralValueScaled }: BorrowerPositionCardProps) {
+export function BorrowerPositionCard({
+  factorBps,
+  tier,
+  collateralValueScaled,
+  collateralDeposited,
+  debtOutstanding,
+}: BorrowerPositionCardProps) {
   if (collateralDeposited <= 0n && debtOutstanding <= 0n) {
     return (
       <EmptyState
