@@ -3,6 +3,7 @@ package indexer
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math/big"
 	"time"
 
@@ -99,4 +100,39 @@ func narrowHealth(healthFactorBps *big.Int, debtAmount *big.Int) *int32 {
 	}
 
 	return narrowBps(healthFactorBps)
+}
+
+func (t *PositionTracker) Revalue(ctx context.Context, head func(context.Context) (uint64, error), every time.Duration, logger *slog.Logger) {
+	if every <= 0 {
+		every = time.Minute
+	}
+
+	ticker := time.NewTicker(every)
+	defer ticker.Stop()
+
+	logger.Info("position revaluation started", slog.Duration("interval", every))
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+
+		at, err := head(ctx)
+		if err != nil {
+			continue
+		}
+
+		revalued, err := t.Backfill(ctx, int64(at))
+		if err != nil {
+			logger.Warn("revaluing positions stopped early", slog.String("error", err.Error()))
+
+			continue
+		}
+
+		if revalued > 0 {
+			logger.Debug("revalued positions", slog.Int("positions", revalued), slog.Uint64("block", at))
+		}
+	}
 }

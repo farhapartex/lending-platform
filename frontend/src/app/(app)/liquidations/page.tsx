@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { BadgeTone, DataStatus, IconName, SectionId, SectionTone } from "@/lib/enums";
-import { liquidationsDataStatus, liquidationsPageContent } from "@/content/liquidations";
-import { Alert } from "@/components/ui/Alert";
+import { SectionId, SectionTone } from "@/lib/enums";
+import { liquidationsPageContent } from "@/content/liquidations";
 import { Container } from "@/components/ui/Container";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
@@ -28,16 +27,10 @@ export default function LiquidationsPage() {
           {liquidationsPageContent.listTitle}
         </h2>
 
-        {liquidationsDataStatus === DataStatus.Unavailable ? (
-          <Alert title={liquidationsPageContent.unavailableTitle} tone={BadgeTone.Caution} icon={IconName.Warning}>
-            {liquidationsPageContent.unavailableDescription}
-          </Alert>
-        ) : (
-          <div className="flex flex-col gap-6">
-            <LiquidationsPanel />
-            <HowLiquidationWorksCallout />
-          </div>
-        )}
+        <div className="flex flex-col gap-6">
+          <LiquidationsPanel />
+          <HowLiquidationWorksCallout />
+        </div>
       </Section>
 
       <Section id={SectionId.LiquidationsHistory} tone={SectionTone.Surface}>

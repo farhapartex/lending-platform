@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ButtonVariant, IconName, LiquidationSortKey } from "@/lib/enums";
+import { BadgeTone, ButtonVariant, IconName, LiquidationSortKey } from "@/lib/enums";
 import { collateralDecimals, debtDecimals } from "@/content/protocol";
 import { liquidationsPageContent } from "@/content/liquidations";
 import { buildLiquidationRow, compareBigInt, isLiquidatable, type LiquidationRow } from "@/lib/liquidation";
 import { useEligiblePositions } from "@/hooks/useEligiblePositions";
 import { usePositionView } from "@/hooks/usePositionView";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -74,6 +75,16 @@ export function LiquidationsPanel() {
 
   if (eligible.isLoading || view === undefined) {
     return <Skeleton className="h-48 w-full rounded-card" />;
+  }
+
+  if (!view.isValued) {
+    return (
+      <Alert title="Liquidations are paused while the price feed is quiet" tone={BadgeTone.Caution} icon={IconName.Warning}>
+        The WETH price has not been reported recently, so no position can be valued and the protocol will refuse to
+        settle one. Any attempt would be rejected on chain before it cost you gas. This clears on its own once a fresh
+        price arrives.
+      </Alert>
+    );
   }
 
   if (rows.length === 0) {

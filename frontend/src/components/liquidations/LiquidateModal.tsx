@@ -12,6 +12,7 @@ import {
 } from "@/lib/enums";
 import { useWalletState } from "@/hooks/useWalletState";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
+import { usePositionView } from "@/hooks/usePositionView";
 import { useProtocolContracts } from "@/hooks/useProtocolContracts";
 import { useTxFlow, type TxStep } from "@/hooks/useTxFlow";
 import { WalletGate } from "@/components/app/WalletGate";
@@ -39,6 +40,7 @@ export function LiquidateModal({ row, onClose }: LiquidateModalProps) {
   const { status: walletStatus, address } = useWalletState();
   const balances = useTokenBalances(address);
   const { contracts } = useProtocolContracts();
+  const { view } = usePositionView();
 
   const approval: TxStep | null =
     contracts === null || row === null || (balances.data?.usdcAllowance ?? 0n) >= row.debtAmount
@@ -69,6 +71,7 @@ export function LiquidateModal({ row, onClose }: LiquidateModalProps) {
   const liquidatorUsdcBalance = balances.data?.walletUsdc ?? 0n;
   const isConnected = walletStatus === WalletStatus.Connected;
   const hasBalance = balances.data !== undefined;
+  const isPriced = view === undefined || view.isValued;
   const canAfford = !isConnected || !hasBalance || liquidatorUsdcBalance >= row.debtAmount;
   const needsApproval = hasBalance && (balances.data?.usdcAllowance ?? 0n) < row.debtAmount;
 
@@ -93,7 +96,7 @@ export function LiquidateModal({ row, onClose }: LiquidateModalProps) {
             Cancel
           </Button>
           {isConnected ? (
-            <Button size={ButtonSize.Md} disabled={!canAfford || tx.isBusy} onClick={tx.submit}>
+            <Button size={ButtonSize.Md} disabled={!canAfford || !isPriced || tx.isBusy} onClick={tx.submit}>
               {tx.isBusy ? "Working" : "Repay and claim collateral"}
             </Button>
           ) : null}
@@ -117,6 +120,13 @@ export function LiquidateModal({ row, onClose }: LiquidateModalProps) {
 
         <WalletGate purpose={WalletGatePurpose.Liquidate} skeletonClassName="h-32 rounded-card">
           <div className="flex flex-col gap-5">
+            {isPriced ? null : (
+              <Alert title="The price feed has gone quiet" tone={BadgeTone.Caution} icon={IconName.Warning}>
+                The protocol will refuse to settle a position it cannot value, so this would be rejected on chain.
+                It becomes possible again once a fresh price arrives.
+              </Alert>
+            )}
+
             {canAfford ? null : (
               <Alert title="Not enough USDC to repay this loan" tone={BadgeTone.Caution} icon={IconName.Warning}>
                 You need {formatTokenAmount(row.debtAmount, debtDecimals, 2)} {AssetSymbol.Usdc} to settle this

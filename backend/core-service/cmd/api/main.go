@@ -290,6 +290,7 @@ func startIndexer(ctx context.Context, cfg config.Config, built stores, log *slo
 	}
 
 	go runner.Run(ctx)
+	go tracker.Revalue(ctx, client.HeadBlock, cfg.Chain.SnapshotInterval, log)
 
 	log.Info(
 		"indexer attached to the market",
