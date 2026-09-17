@@ -209,6 +209,6 @@ export const historyPageContent = {
   detailMissingDescription:
     "It may belong to a different wallet, or the indexed history may have been rebuilt. Nothing about your position has changed.",
   detailRefreshing: "Checking for the latest record",
-  detailSampleNotice: "This is sample data. Live records will appear once transaction history is being indexed.",
+  detailSampleNotice: "Connect a wallet to load the full record for this transaction.",
   retry: "Try again",
 } as const;

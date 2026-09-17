@@ -10,4 +10,7 @@ export const queryKeys = {
   liquidationHistory: (market: string | undefined, cursor: string | null, limit: number) =>
     ["liquidationHistory", market, cursor, limit] as const,
   liquidationReceipt: (liquidationId: string | null) => ["liquidationReceipt", liquidationId] as const,
+  eligiblePositions: (limit: number) => ["eligiblePositions", limit] as const,
+  transactionList: (address: string | undefined, filters: unknown) =>
+    ["transactionList", address, filters] as const,
 } as const;

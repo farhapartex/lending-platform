@@ -54,3 +54,24 @@ export type WireLiquidationList = {
   next_cursor: string | null;
   as_of: WireAsOf;
 };
+
+export type WireEligiblePosition = {
+  borrower: string;
+  collateral_amount: WireAmount;
+  debt_amount: WireAmount;
+  collateral_value: WireAmount | null;
+  debt_value: WireAmount | null;
+  health_factor_bps: number | null;
+  last_event_block: number;
+};
+
+export type WireEligibleList = {
+  items: WireEligiblePosition[];
+  as_of: WireAsOf;
+};
+
+export type WireTransactionList = {
+  items: WireTransaction[];
+  next_cursor: string | null;
+  as_of: WireAsOf;
+};

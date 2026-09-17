@@ -8,10 +8,13 @@ import {
   allTypesFilter,
   type TypeFilterValue,
 } from "@/lib/enums";
-import { historyAsOf, historyEntries, historyPageContent, historyPageSize, type HistoryEntry } from "@/content/history";
+import { historyPageContent, historyPageSize, type HistoryEntry } from "@/content/history";
+import { wireValuesByKind } from "@/lib/api/transactionMapper";
+import { useTransactionList } from "@/hooks/useTransactionList";
 import { useWalletState } from "@/hooks/useWalletState";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { DateRangeFilter } from "@/components/history/DateRangeFilter";
 import { TxDetailDrawer } from "@/components/history/TxDetailDrawer";
 import { TxHistoryTable } from "@/components/history/TxHistoryTable";
@@ -26,20 +29,14 @@ const presetDays: Record<DateRangePreset, number | null> = {
   [DateRangePreset.Last90Days]: 90,
 };
 
-const asOfMs = new Date(historyAsOf).getTime();
-
-const sortedEntries = [...historyEntries].sort(
-  (left, right) => new Date(right.timestamp).getTime() - new Date(left.timestamp).getTime(),
-);
-
-function withinRange(entry: HistoryEntry, preset: DateRangePreset): boolean {
+function rangeStart(preset: DateRangePreset): string | undefined {
   const days = presetDays[preset];
 
   if (days === null) {
-    return true;
+    return undefined;
   }
 
-  return new Date(entry.timestamp).getTime() >= asOfMs - days * millisecondsPerDay;
+  return new Date(Date.now() - days * millisecondsPerDay).toISOString();
 }
 
 export function HistoryPanel() {
@@ -49,17 +46,38 @@ export function HistoryPanel() {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<HistoryEntry | null>(null);
 
-  const filtered = useMemo(
-    () =>
-      sortedEntries.filter(
-        (entry) => (typeFilter === allTypesFilter || entry.kind === typeFilter) && withinRange(entry, rangeFilter),
-      ),
+  const filters = useMemo(
+    () => ({
+      kinds: typeFilter === allTypesFilter ? undefined : [wireValuesByKind[typeFilter]],
+      from: rangeStart(rangeFilter),
+      limit: historyPageSize * 10,
+    }),
     [typeFilter, rangeFilter],
   );
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / historyPageSize));
+  const list = useTransactionList(address, filters);
+
+  const entries = useMemo<HistoryEntry[]>(
+    () =>
+      (list.page?.items ?? []).map((item) => ({
+        id: item.id,
+        kind: item.kind,
+        amount: item.amount,
+        symbol: item.symbol as HistoryEntry["symbol"],
+        decimals: item.decimals,
+        timestamp: item.timestamp,
+        blockNumber: item.blockNumber,
+        txHash: item.txHash,
+        healthFactorAfterBps: item.healthFactorAfterBps,
+      })),
+    [list.page],
+  );
+
+  const pageCount = Math.max(1, Math.ceil(entries.length / historyPageSize));
   const safePage = Math.min(page, pageCount);
-  const visible = filtered.slice((safePage - 1) * historyPageSize, safePage * historyPageSize);
+  const visible = entries.slice((safePage - 1) * historyPageSize, safePage * historyPageSize);
+
+  const hasFilters = typeFilter !== allTypesFilter || rangeFilter !== DateRangePreset.AllTime;
 
   const resetFilters = () => {
     setTypeFilter(allTypesFilter);
@@ -67,12 +85,17 @@ export function HistoryPanel() {
     setPage(1);
   };
 
-  if (sortedEntries.length === 0) {
+  if (list.isError) {
     return (
       <EmptyState
-        title={historyPageContent.emptyTitle}
-        description={historyPageContent.emptyDescription}
-        icon={IconName.Receipt}
+        title={historyPageContent.unavailableTitle}
+        description={historyPageContent.unavailableDescription}
+        icon={IconName.Warning}
+        action={
+          <Button variant={ButtonVariant.Subtle} onClick={list.refetch}>
+            Try again
+          </Button>
+        }
       />
     );
   }
@@ -96,28 +119,34 @@ export function HistoryPanel() {
         />
       </div>
 
-      {filtered.length === 0 ? (
+      {list.isLoading ? <Skeleton className="h-64 w-full rounded-card" /> : null}
+
+      {!list.isLoading && entries.length === 0 ? (
         <EmptyState
-          title={historyPageContent.noMatchTitle}
-          description={historyPageContent.noMatchDescription}
-          icon={IconName.Info}
+          title={hasFilters ? historyPageContent.noMatchTitle : historyPageContent.emptyTitle}
+          description={hasFilters ? historyPageContent.noMatchDescription : historyPageContent.emptyDescription}
+          icon={hasFilters ? IconName.Info : IconName.Receipt}
           action={
-            <Button variant={ButtonVariant.Subtle} onClick={resetFilters}>
-              Clear filters
-            </Button>
+            hasFilters ? (
+              <Button variant={ButtonVariant.Subtle} onClick={resetFilters}>
+                Clear filters
+              </Button>
+            ) : undefined
           }
         />
-      ) : (
+      ) : null}
+
+      {!list.isLoading && entries.length > 0 ? (
         <TxHistoryTable
           entries={visible}
           page={safePage}
           pageCount={pageCount}
-          totalItems={filtered.length}
+          totalItems={entries.length}
           pageSize={historyPageSize}
           onPageChange={setPage}
           onSelect={setSelected}
         />
-      )}
+      ) : null}
 
       <TxDetailDrawer entry={selected} address={address} onClose={() => setSelected(null)} />
     </div>

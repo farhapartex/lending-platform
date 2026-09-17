@@ -1,6 +1,6 @@
 import { ActivityKind, ApiErrorCode } from "@/lib/enums";
 import { ApiError } from "@/lib/api/errors";
-import type { WireAmount, WireAsOf, WireActivity, WireTransaction } from "@/lib/api/wire";
+import type { WireAmount, WireAsOf, WireActivity, WireTransaction, WireTransactionList } from "@/lib/api/wire";
 
 export type TransactionDetail = {
   id: string;
@@ -154,6 +154,28 @@ export function toActivityPage(wire: WireActivity): ActivityPage {
 
   return {
     items: wire.items.map((item) => toTransactionDetail(item)),
+    asOf: toIndexedAt(wire.as_of),
+  };
+}
+
+export type TransactionListPage = {
+  items: TransactionDetail[];
+  nextCursor: string | null;
+  asOf: IndexedAt;
+};
+
+export function toTransactionListPage(wire: WireTransactionList): TransactionListPage {
+  if (!Array.isArray(wire?.items)) {
+    throw malformed("items");
+  }
+
+  if (wire.next_cursor !== null && typeof wire.next_cursor !== "string") {
+    throw malformed("next_cursor");
+  }
+
+  return {
+    items: wire.items.map((item) => toTransactionDetail(item)),
+    nextCursor: wire.next_cursor,
     asOf: toIndexedAt(wire.as_of),
   };
 }

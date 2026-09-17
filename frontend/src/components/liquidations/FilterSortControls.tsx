@@ -18,12 +18,9 @@ type FilterSortControlsProps = {
 export function FilterSortControls({ sortKey, onSortChange, visibleCount }: FilterSortControlsProps) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
-      <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-ink">
-          {visibleCount} {visibleCount === 1 ? "position" : "positions"} eligible
-        </span>
-        <p className="text-xs text-ink-faint">Example positions, until past events have been indexed.</p>
-      </div>
+      <span className="text-sm font-medium text-ink">
+        {visibleCount} {visibleCount === 1 ? "position" : "positions"} eligible
+      </span>
 
       <Dropdown
         id="liquidation-sort"
