@@ -12,8 +12,10 @@ import {
 import { formatValue } from "@/lib/format";
 import { formatTokenAmount, minBigInt, parseTokenAmount, tokenAmountToUsd } from "@/lib/token";
 import { isBlockingValidation, validateLendAmount } from "@/lib/validation";
-import { estimatedGasUsd, lendAssetDecimals, txFlowStatus } from "@/content/lend";
+import { estimatedGasUsd, lendAssetDecimals } from "@/content/lend";
 import type { PositionView } from "@/hooks/usePositionView";
+import { useProtocolContracts } from "@/hooks/useProtocolContracts";
+import { useTxFlow, type TxStep } from "@/hooks/useTxFlow";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { TabBar } from "@/components/ui/TabBar";
@@ -69,6 +71,7 @@ type LendActionPanelProps = {
 };
 
 export function LendActionPanel({ view }: LendActionPanelProps) {
+  const { contracts } = useProtocolContracts();
   const [tab, setTab] = useState(LendTab.Deposit);
   const [rawAmount, setRawAmount] = useState("");
 
@@ -100,6 +103,32 @@ export function LendActionPanel({ view }: LendActionPanelProps) {
   const canSubmit = amount !== null && !hasBlockingError;
 
   const resultingBalance = amount === null ? depositedBalance : isDeposit ? depositedBalance + amount : depositedBalance - amount;
+
+  const approval: TxStep | null =
+    contracts === null || !isDeposit || amount === null || amount <= view.usdcAllowance
+      ? null
+      : {
+          address: contracts.debtToken.address,
+          abi: contracts.debtToken.abi,
+          functionName: "approve",
+          args: [contracts.pool.address, amount],
+        };
+
+  const action: TxStep | null =
+    contracts === null || amount === null
+      ? null
+      : {
+          address: contracts.pool.address,
+          abi: contracts.pool.abi,
+          functionName: isDeposit ? "deposit" : "withdraw",
+          args: [amount],
+        };
+
+  const tx = useTxFlow({
+    approval,
+    action,
+    onConfirmed: () => setRawAmount(""),
+  });
 
   const reviewRows = [
     {
@@ -183,9 +212,19 @@ export function LendActionPanel({ view }: LendActionPanelProps) {
             />
           ) : null}
 
-          <TxStatusTracker status={txFlowStatus} />
+          <TxStatusTracker
+            status={tx.status}
+            approvalAsset={AssetSymbol.Usdc}
+            approvalSpender="pool"
+            confirmedMessage={
+              isDeposit
+                ? "Your deposit is in the pool and has started earning interest."
+                : "Your USDC is back in your wallet."
+            }
+            errorMessage={tx.error}
+          />
 
-          <Button size={ButtonSize.Lg} fullWidth disabled={!canSubmit}>
+          <Button size={ButtonSize.Lg} fullWidth disabled={!canSubmit || tx.isBusy} onClick={tx.submit}>
             {isDeposit ? "Deposit" : "Withdraw"}
           </Button>
         </div>

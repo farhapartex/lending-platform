@@ -14,9 +14,11 @@ import { formatValue } from "@/lib/format";
 import { borrowCapacity, healthFactorBps, healthTier, toValueScaled } from "@/lib/health";
 import { formatTokenAmount, minBigInt, parseTokenAmount, toAmountInputValue } from "@/lib/token";
 import { isBlockingValidation, validateDebtAmount } from "@/lib/validation";
-import { debtDecimals, defaultRepayMode, estimatedGasUsd, txFlowStatus } from "@/content/borrow";
+import { debtDecimals, defaultRepayMode, estimatedGasUsd } from "@/content/borrow";
 import { bpsToRatio } from "@/lib/units";
 import type { PositionView } from "@/hooks/usePositionView";
+import { useProtocolContracts } from "@/hooks/useProtocolContracts";
+import { useTxFlow, type TxStep } from "@/hooks/useTxFlow";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { TabBar } from "@/components/ui/TabBar";
@@ -67,6 +69,7 @@ type DebtPanelProps = {
 };
 
 export function DebtPanel({ view }: DebtPanelProps) {
+  const { contracts } = useProtocolContracts();
   const walletUsdc = view.walletUsdc;
   const debtOutstanding = view.debtOutstanding;
   const debtValueScaled = view.debtValueScaled;
@@ -132,6 +135,32 @@ export function DebtPanel({ view }: DebtPanelProps) {
     setRawAmount(toAmountInputValue(nextAmount, debtDecimals));
   };
 
+  const approval: TxStep | null =
+    contracts === null || isBorrow || amount === null || amount <= view.usdcAllowance
+      ? null
+      : {
+          address: contracts.debtToken.address,
+          abi: contracts.debtToken.abi,
+          functionName: "approve",
+          args: [contracts.pool.address, amount],
+        };
+
+  const action: TxStep | null =
+    contracts === null || amount === null
+      ? null
+      : {
+          address: contracts.controller.address,
+          abi: contracts.controller.abi,
+          functionName: isBorrow ? "borrow" : isFullRepay ? "repayAll" : "repay",
+          args: isFullRepay ? [] : [amount],
+        };
+
+  const tx = useTxFlow({
+    approval,
+    action,
+    onConfirmed: () => setRawAmount(""),
+  });
+
   const reviewRows = [
     {
       label: isBorrow ? "You borrow" : "You repay",
@@ -162,6 +191,7 @@ export function DebtPanel({ view }: DebtPanelProps) {
           onChange={(value) => {
             setTab(value);
             setRawAmount("");
+            tx.reset();
           }}
         />
       </div>
@@ -247,10 +277,20 @@ export function DebtPanel({ view }: DebtPanelProps) {
             />
           ) : null}
 
-          <TxStatusTracker status={txFlowStatus} />
+          <TxStatusTracker
+            status={tx.status}
+            approvalAsset={AssetSymbol.Usdc}
+            approvalSpender="pool"
+            confirmedMessage={
+              isBorrow
+                ? "The USDC is in your wallet and interest has started accruing."
+                : "Your debt has gone down and your safety score has gone up."
+            }
+            errorMessage={tx.error}
+          />
 
-          <Button size={ButtonSize.Lg} fullWidth disabled={!canSubmit}>
-            {isBorrow ? "Borrow" : "Repay"}
+          <Button size={ButtonSize.Lg} fullWidth disabled={!canSubmit || tx.isBusy} onClick={tx.submit}>
+            {tx.isBusy ? "Working" : isBorrow ? "Borrow" : "Repay"}
           </Button>
         </div>
       </WalletGate>

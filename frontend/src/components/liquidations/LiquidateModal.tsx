@@ -12,10 +12,12 @@ import {
 } from "@/lib/enums";
 import { useWalletState } from "@/hooks/useWalletState";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
+import { useProtocolContracts } from "@/hooks/useProtocolContracts";
+import { useTxFlow, type TxStep } from "@/hooks/useTxFlow";
 import { WalletGate } from "@/components/app/WalletGate";
 import { formatTokenAmount } from "@/lib/token";
 import { debtDecimals } from "@/content/protocol";
-import { estimatedGasUsd, txFlowStatus } from "@/content/liquidations";
+import { estimatedGasUsd } from "@/content/liquidations";
 import type { LiquidationRow } from "@/lib/liquidation";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
@@ -36,6 +38,29 @@ type LiquidateModalProps = {
 export function LiquidateModal({ row, onClose }: LiquidateModalProps) {
   const { status: walletStatus, address } = useWalletState();
   const balances = useTokenBalances(address);
+  const { contracts } = useProtocolContracts();
+
+  const approval: TxStep | null =
+    contracts === null || row === null || (balances.data?.usdcAllowance ?? 0n) >= row.debtAmount
+      ? null
+      : {
+          address: contracts.debtToken.address,
+          abi: contracts.debtToken.abi,
+          functionName: "approve",
+          args: [contracts.pool.address, row.debtAmount],
+        };
+
+  const action: TxStep | null =
+    contracts === null || row === null
+      ? null
+      : {
+          address: contracts.liquidationManager.address,
+          abi: contracts.liquidationManager.abi,
+          functionName: "liquidate",
+          args: [row.borrower],
+        };
+
+  const tx = useTxFlow({ approval, action, onConfirmed: onClose });
 
   if (row === null) {
     return null;
@@ -68,8 +93,8 @@ export function LiquidateModal({ row, onClose }: LiquidateModalProps) {
             Cancel
           </Button>
           {isConnected ? (
-            <Button size={ButtonSize.Md} disabled={!canAfford}>
-              Repay and claim collateral
+            <Button size={ButtonSize.Md} disabled={!canAfford || tx.isBusy} onClick={tx.submit}>
+              {tx.isBusy ? "Working" : "Repay and claim collateral"}
             </Button>
           ) : null}
         </div>
@@ -122,7 +147,13 @@ export function LiquidateModal({ row, onClose }: LiquidateModalProps) {
 
             <RaceConditionNotice />
 
-            <TxStatusTracker status={txFlowStatus} />
+            <TxStatusTracker
+              status={tx.status}
+              approvalAsset={AssetSymbol.Usdc}
+              approvalSpender="pool"
+              confirmedMessage="The loan is repaid and the collateral, plus your bonus, is in your wallet."
+              errorMessage={tx.error}
+            />
           </div>
         </WalletGate>
       </div>
