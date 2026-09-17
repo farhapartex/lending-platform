@@ -12,12 +12,11 @@ const sliderMax = 10_000;
 type BorrowLimitSliderProps = {
   valueBps: number;
   onChange: (valueBps: number) => void;
-  capacity: bigint;
+  selectedAmount: bigint;
 };
 
-export function BorrowLimitSlider({ valueBps, onChange, capacity }: BorrowLimitSliderProps) {
+export function BorrowLimitSlider({ valueBps, onChange, selectedAmount }: BorrowLimitSliderProps) {
   const recommendedShare = (Number(recommendedLtvBps) / Number(maxLtvBps)) * 100;
-  const selectedAmount = (capacity * BigInt(valueBps)) / BigInt(sliderMax);
   const isBeyondRecommended = valueBps > (Number(recommendedLtvBps) / Number(maxLtvBps)) * sliderMax;
 
   return (

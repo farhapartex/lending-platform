@@ -131,7 +131,11 @@ export function DebtPanel() {
   const nextFactor = healthFactorBps(collateralValueScaled, nextDebtValue, liquidationThresholdBps);
   const nextTier = healthTier(nextFactor);
 
-  const sliderBps = capacity <= 0n || typedAmount === null ? 0 : Number((typedAmount * BigInt(sliderMax)) / capacity);
+  const sliderAmount = typedAmount === null ? 0n : minBigInt(typedAmount, capacity);
+  const sliderBps =
+    capacity <= 0n || typedAmount === null
+      ? 0
+      : Math.min(sliderMax, Number((typedAmount * BigInt(sliderMax)) / capacity));
 
   const handleSliderChange = (valueBps: number) => {
     const nextAmount = (capacity * BigInt(valueBps)) / BigInt(sliderMax);
@@ -212,7 +216,7 @@ export function DebtPanel() {
           )}
 
           {isBorrow ? (
-            <BorrowLimitSlider valueBps={sliderBps} onChange={handleSliderChange} capacity={capacity} />
+            <BorrowLimitSlider valueBps={sliderBps} onChange={handleSliderChange} selectedAmount={sliderAmount} />
           ) : null}
 
           <AmountValidationMessage id={validationMessageId} code={validation} messages={messages} />
