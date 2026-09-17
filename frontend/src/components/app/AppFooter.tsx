@@ -20,7 +20,7 @@ export function AppFooter() {
             </TextLink>
           ))}
         </nav>
-        <p className="text-xs text-ink-faint">Interface preview built with mock data. Not connected to a live market.</p>
+        <p className="text-xs text-ink-faint">Reads the market straight from the chain. Nobody has audited these contracts, so do not put real money in.</p>
       </Container>
     </footer>
   );

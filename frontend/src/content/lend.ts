@@ -1,5 +1,5 @@
 import { AssetSymbol, TxFlowStatus } from "@/lib/enums";
-import { assetDecimals, availableLiquidity, supplyApyRate } from "@/content/protocol";
+import { assetDecimals, availableLiquidity } from "@/content/protocol";
 import { parseTokenAmount } from "@/lib/token";
 
 const usdcDecimals = assetDecimals[AssetSymbol.Usdc];
@@ -9,8 +9,6 @@ export const lendAsset = AssetSymbol.Usdc;
 export const lendAssetDecimals = usdcDecimals;
 
 export const secondsPerYear = 31_536_000n;
-
-export const supplyApyBasisPoints = BigInt(Math.round(supplyApyRate * 10_000));
 
 export const depositedPrincipal = parseTokenAmount("25000", usdcDecimals) ?? 0n;
 

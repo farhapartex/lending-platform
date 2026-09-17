@@ -33,7 +33,7 @@ export function MarketingFooter() {
         </div>
 
         <div className="mt-12 flex flex-col gap-4 border-t border-line pt-8 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-ink-faint">Interface preview built with mock data. Not yet connected to a live market.</p>
+          <p className="text-xs text-ink-faint">Reads the market straight from the chain. Nobody has audited these contracts, so do not put real money in.</p>
           <p className="text-xs text-ink-faint">
             Lending and borrowing crypto carries risk, including liquidation of your collateral.
           </p>
