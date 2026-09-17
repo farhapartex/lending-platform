@@ -50,6 +50,7 @@ type CheckpointRepository interface {
 
 type ProtocolEventRepository interface {
 	Insert(ctx context.Context, event *ProtocolEvent) error
+	DeleteFrom(ctx context.Context, chainID int64, blockNumber int64) (int64, error)
 }
 
 type IndexedBlockRepository interface {

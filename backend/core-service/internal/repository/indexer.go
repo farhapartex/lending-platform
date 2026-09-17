@@ -57,6 +57,18 @@ func (r *protocolEventRepository) loadExisting(ctx context.Context, event *domai
 	return nil
 }
 
+func (r *protocolEventRepository) DeleteFrom(ctx context.Context, chainID int64, blockNumber int64) (int64, error) {
+	statement := r.db.WithContext(ctx).
+		Where("chain_id = ? AND block_number >= ?", chainID, blockNumber).
+		Delete(&domain.ProtocolEvent{})
+
+	if statement.Error != nil {
+		return 0, translate(statement.Error, "protocol event")
+	}
+
+	return statement.RowsAffected, nil
+}
+
 type indexedBlockRepository struct {
 	db *gorm.DB
 }

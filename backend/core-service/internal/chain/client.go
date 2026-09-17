@@ -170,3 +170,7 @@ func (c *Client) Logs(ctx context.Context, from uint64, to uint64, addresses []c
 
 	return logs, nil
 }
+
+func (c *Client) Eth() *ethclient.Client {
+	return c.eth
+}

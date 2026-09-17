@@ -13,8 +13,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
+	"gorm.io/gorm"
+
+	"github.com/farhapartex/lending-platform/core-service/internal/chain"
 	"github.com/farhapartex/lending-platform/core-service/internal/config"
 	"github.com/farhapartex/lending-platform/core-service/internal/domain"
+	"github.com/farhapartex/lending-platform/core-service/internal/indexer"
 	"github.com/farhapartex/lending-platform/core-service/internal/platform/database"
 	"github.com/farhapartex/lending-platform/core-service/internal/platform/logger"
 	"github.com/farhapartex/lending-platform/core-service/internal/repository"
@@ -45,6 +50,9 @@ func run() error {
 
 	log := logger.New(cfg.LogLevel, cfg.AppEnv, cfg.ServiceName, cfg.ServiceVersion)
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	healthService := service.NewHealthService(service.HealthServiceParams{
 		ServiceName: cfg.ServiceName,
 		Version:     cfg.ServiceVersion,
@@ -66,6 +74,15 @@ func run() error {
 		defer closeDatabase()
 	}
 
+	if stores.db != nil && cfg.Chain.IndexerEnabled {
+		stopIndexer, err := startIndexer(ctx, cfg, stores, log)
+		if err != nil {
+			log.Error("the indexer could not start", slog.String("error", err.Error()))
+		} else if stopIndexer != nil {
+			defer stopIndexer()
+		}
+	}
+
 	router := transporthttp.NewRouter(transporthttp.RouterParams{
 		Config:             cfg,
 		Logger:             log,
@@ -83,9 +100,6 @@ func run() error {
 		WriteTimeout:      cfg.WriteTimeout,
 		IdleTimeout:       cfg.IdleTimeout,
 	}
-
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 
 	serverErrors := make(chan error, 1)
 
@@ -124,6 +138,7 @@ func run() error {
 type stores struct {
 	transactions domain.TransactionService
 	liquidations domain.LiquidationService
+	db           *gorm.DB
 }
 
 func buildStores(cfg config.Config, log *slog.Logger) (stores, func(), error) {
@@ -159,6 +174,7 @@ func buildStores(cfg config.Config, log *slog.Logger) (stores, func(), error) {
 	checkpoints := repository.NewCheckpointRepository(db)
 
 	built := stores{
+		db: db,
 		transactions: service.NewTransactionService(service.TransactionServiceParams{
 			Users:        repository.NewUserRepository(db),
 			Transactions: repository.NewTransactionRepository(db),
@@ -171,4 +187,78 @@ func buildStores(cfg config.Config, log *slog.Logger) (stores, func(), error) {
 	}
 
 	return built, closeDatabase, nil
+}
+
+func startIndexer(ctx context.Context, cfg config.Config, built stores, log *slog.Logger) (func(), error) {
+	client, err := chain.Dial(ctx, chain.ClientParams{
+		RPCURL:          cfg.Chain.RPCURL,
+		ExpectedChainID: cfg.Chain.ChainID,
+		RequestTimeout:  cfg.Chain.RequestTimeout,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	marketReader, err := chain.NewMarketReader(client.Eth(), chain.MarketReaderParams{
+		LensAddress:    cfg.Chain.Contracts.Lens,
+		RequestTimeout: cfg.Chain.RequestTimeout,
+	})
+	if err != nil {
+		client.Close()
+
+		return nil, err
+	}
+
+	market, err := indexer.EnsureMarket(ctx, indexer.BootstrapParams{
+		Chain:      cfg.Chain,
+		Eth:        client.Eth(),
+		MarketView: marketReader,
+		Assets:     repository.NewAssetRepository(built.db),
+		Markets:    repository.NewMarketRepository(built.db),
+	})
+	if err != nil {
+		client.Close()
+
+		return nil, err
+	}
+
+	decoder, err := indexer.NewDecoder(indexer.ContractSet{
+		Pool:               common.HexToAddress(cfg.Chain.Contracts.Pool),
+		Vault:              common.HexToAddress(cfg.Chain.Contracts.Vault),
+		Controller:         common.HexToAddress(cfg.Chain.Contracts.Controller),
+		LiquidationManager: common.HexToAddress(cfg.Chain.Contracts.LiquidationManager),
+	})
+	if err != nil {
+		client.Close()
+
+		return nil, err
+	}
+
+	runner := indexer.NewRunner(indexer.RunnerParams{
+		Chain:   cfg.Chain,
+		Client:  client,
+		Decoder: decoder,
+		Ingestor: indexer.NewIngestor(indexer.IngestorParams{
+			ChainID:      cfg.Chain.ChainID,
+			Market:       market,
+			Users:        repository.NewUserRepository(built.db),
+			Events:       repository.NewProtocolEventRepository(built.db),
+			Transactions: repository.NewTransactionRepository(built.db),
+			Liquidations: repository.NewLiquidationRepository(built.db),
+		}),
+		Events:      repository.NewProtocolEventRepository(built.db),
+		Blocks:      repository.NewIndexedBlockRepository(built.db),
+		Checkpoints: repository.NewCheckpointRepository(built.db),
+		Logger:      log,
+	})
+
+	go runner.Run(ctx)
+
+	log.Info(
+		"indexer attached to the market",
+		slog.Int64("market_id", market.ID),
+		slog.String("pool", market.PoolAddress),
+	)
+
+	return client.Close, nil
 }
