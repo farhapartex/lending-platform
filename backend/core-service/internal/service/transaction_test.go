@@ -111,6 +111,16 @@ func (s *stubCheckpoints) ByStream(_ context.Context, stream string) (domain.Ind
 	return s.checkpoint, nil
 }
 
+func (s *stubCheckpoints) Save(_ context.Context, checkpoint *domain.IndexerCheckpoint) error {
+	if checkpoint == nil {
+		return domain.ErrInvalidInput
+	}
+
+	s.checkpoint = *checkpoint
+
+	return nil
+}
+
 func newService(users *stubUsers, transactions *stubTransactions) domain.TransactionService {
 	return service.NewTransactionService(service.TransactionServiceParams{
 		Users:        users,

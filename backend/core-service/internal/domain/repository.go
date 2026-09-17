@@ -45,6 +45,23 @@ type TransactionRepository interface {
 
 type CheckpointRepository interface {
 	ByStream(ctx context.Context, stream string) (IndexerCheckpoint, error)
+	Save(ctx context.Context, checkpoint *IndexerCheckpoint) error
+}
+
+type ProtocolEventRepository interface {
+	Insert(ctx context.Context, event *ProtocolEvent) error
+}
+
+type IndexedBlockRepository interface {
+	Insert(ctx context.Context, block *IndexedBlock) error
+	ByNumber(ctx context.Context, chainID int64, number int64) (IndexedBlock, error)
+	DeleteFrom(ctx context.Context, chainID int64, number int64) (int64, error)
+	RecordReorg(ctx context.Context, event *ReorgEvent) error
+}
+
+type PositionRepository interface {
+	Upsert(ctx context.Context, position *Position) error
+	Liquidatable(ctx context.Context, marketID int64, limit int) ([]Position, error)
 }
 
 type UserRepository interface {
