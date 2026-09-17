@@ -3,6 +3,7 @@
 import { useAccount } from "wagmi";
 import { WalletStatus } from "@/lib/enums";
 import { appChainId } from "@/lib/chain";
+import { useIsMounted } from "@/hooks/useIsMounted";
 
 export type WalletState = {
   status: WalletStatus;
@@ -14,6 +15,17 @@ export type WalletState = {
 
 export function useWalletState(): WalletState {
   const { address, chain, chainId, status } = useAccount();
+  const isMounted = useIsMounted();
+
+  if (!isMounted) {
+    return {
+      status: WalletStatus.Connecting,
+      address: undefined,
+      chainId: undefined,
+      chainName: undefined,
+      isSettling: true,
+    };
+  }
 
   if (status === "connected") {
     const onExpectedChain = chainId === appChainId;
