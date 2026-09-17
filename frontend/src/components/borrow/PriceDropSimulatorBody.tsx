@@ -12,16 +12,9 @@ import {
   scaledValueToUsd,
   toValueScaled,
 } from "@/lib/health";
-import {
-  collateralDecimals,
-  collateralDeposited,
-  collateralUnitPriceScaled,
-  debtDecimals,
-  debtOutstanding,
-  debtUnitPriceScaled,
-  liquidationThresholdBps,
-  maxSimulatedDropBps,
-} from "@/content/borrow";
+import { collateralDecimals, maxSimulatedDropBps } from "@/content/borrow";
+import { usePositionView } from "@/hooks/usePositionView";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { HealthBadge } from "@/components/borrow/HealthBadge";
 
 const sliderId = "price-drop-slider";
@@ -32,11 +25,15 @@ const sliderClasses =
 
 export function PriceDropSimulatorBody() {
   const [dropBps, setDropBps] = useState(0);
+  const { view } = usePositionView();
 
-  const simulatedPriceScaled = applyPriceDrop(collateralUnitPriceScaled, BigInt(dropBps));
-  const simulatedCollateralValue = toValueScaled(collateralDeposited, collateralDecimals, simulatedPriceScaled);
-  const debtValue = toValueScaled(debtOutstanding, debtDecimals, debtUnitPriceScaled);
-  const simulatedFactor = healthFactorBps(simulatedCollateralValue, debtValue, liquidationThresholdBps);
+  if (view === undefined) {
+    return <Skeleton className="h-40 w-full" />;
+  }
+
+  const simulatedPriceScaled = applyPriceDrop(view.collateralUnitPriceScaled, BigInt(dropBps));
+  const simulatedCollateralValue = toValueScaled(view.collateralDeposited, collateralDecimals, simulatedPriceScaled);
+  const simulatedFactor = healthFactorBps(simulatedCollateralValue, view.debtValueScaled, view.liquidationThresholdBps);
   const simulatedTier = healthTier(simulatedFactor);
 
   return (

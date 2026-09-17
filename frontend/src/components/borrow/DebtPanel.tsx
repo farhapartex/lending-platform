@@ -14,24 +14,9 @@ import { formatValue } from "@/lib/format";
 import { borrowCapacity, healthFactorBps, healthTier, toValueScaled } from "@/lib/health";
 import { formatTokenAmount, minBigInt, parseTokenAmount, toAmountInputValue } from "@/lib/token";
 import { isBlockingValidation, validateDebtAmount } from "@/lib/validation";
-import { assetPrices } from "@/content/protocol";
-import { usdcAllowance, walletBalances } from "@/content/wallet";
-import { poolAvailableLiquidity } from "@/content/lend";
-import {
-  borrowAprDisplayRate,
-  collateralDecimals,
-  collateralDeposited,
-  collateralUnitPriceScaled,
-  debtDecimals,
-  debtOutstanding,
-  debtUnitPriceScaled,
-  defaultRepayMode,
-  estimatedGasUsd,
-  liquidationThresholdBps,
-  maxLtvBps,
-  recommendedLtvBps,
-  txFlowStatus,
-} from "@/content/borrow";
+import { debtDecimals, defaultRepayMode, estimatedGasUsd, txFlowStatus } from "@/content/borrow";
+import { bpsToRatio } from "@/lib/units";
+import type { PositionView } from "@/hooks/usePositionView";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { TabBar } from "@/components/ui/TabBar";
@@ -61,31 +46,6 @@ const repayModeItems = [
   { value: RepayMode.Full, label: "All of it" },
 ];
 
-const walletUsdc = walletBalances[AssetSymbol.Usdc];
-const collateralValueScaled = toValueScaled(collateralDeposited, collateralDecimals, collateralUnitPriceScaled);
-const debtValueScaled = toValueScaled(debtOutstanding, debtDecimals, debtUnitPriceScaled);
-const currentFactor = healthFactorBps(collateralValueScaled, debtValueScaled, liquidationThresholdBps);
-const currentTier = healthTier(currentFactor);
-
-const rawCapacity = borrowCapacity(
-  collateralValueScaled,
-  debtValueScaled,
-  maxLtvBps,
-  debtDecimals,
-  debtUnitPriceScaled,
-);
-const capacity = minBigInt(rawCapacity, poolAvailableLiquidity);
-const isLiquidityConstrained = poolAvailableLiquidity < rawCapacity;
-
-const recommendedCapacity = borrowCapacity(
-  collateralValueScaled,
-  debtValueScaled,
-  recommendedLtvBps,
-  debtDecimals,
-  debtUnitPriceScaled,
-);
-const isPastRecommended = recommendedCapacity <= 0n;
-
 const messages: Record<AmountValidationCode, string | null> = {
   [AmountValidationCode.None]: null,
   [AmountValidationCode.Empty]: null,
@@ -102,7 +62,37 @@ const messages: Record<AmountValidationCode, string | null> = {
   [AmountValidationCode.ExceedsDebt]: "That is more than you currently owe.",
 };
 
-export function DebtPanel() {
+type DebtPanelProps = {
+  view: PositionView;
+};
+
+export function DebtPanel({ view }: DebtPanelProps) {
+  const walletUsdc = view.walletUsdc;
+  const debtOutstanding = view.debtOutstanding;
+  const debtValueScaled = view.debtValueScaled;
+  const collateralValueScaled = view.collateralValueScaled;
+  const currentFactor = view.factorBps;
+  const currentTier = view.tier;
+
+  const rawCapacity = borrowCapacity(
+    collateralValueScaled,
+    debtValueScaled,
+    view.maxLtvBps,
+    debtDecimals,
+    view.debtUnitPriceScaled,
+  );
+  const capacity = minBigInt(rawCapacity, view.availableLiquidity);
+  const isLiquidityConstrained = view.availableLiquidity < rawCapacity;
+
+  const recommendedCapacity = borrowCapacity(
+    collateralValueScaled,
+    debtValueScaled,
+    view.recommendedLtvBps,
+    debtDecimals,
+    view.debtUnitPriceScaled,
+  );
+  const isPastRecommended = recommendedCapacity <= 0n;
+
   const [tab, setTab] = useState(DebtTab.Borrow);
   const [repayMode, setRepayMode] = useState(defaultRepayMode);
   const [rawAmount, setRawAmount] = useState("");
@@ -117,18 +107,18 @@ export function DebtPanel() {
     tab,
     amount,
     borrowCapacity: capacity,
-    availableLiquidity: poolAvailableLiquidity,
+    availableLiquidity: view.availableLiquidity,
     debtOutstanding,
     walletBalance: walletUsdc,
   });
 
   const hasBlockingError = isBlockingValidation(validation);
   const canSubmit = amount !== null && !hasBlockingError;
-  const needsApproval = !isBorrow && amount !== null && amount > usdcAllowance;
+  const needsApproval = !isBorrow && amount !== null && amount > view.usdcAllowance;
 
   const nextDebt = amount === null ? debtOutstanding : isBorrow ? debtOutstanding + amount : debtOutstanding - amount;
-  const nextDebtValue = toValueScaled(nextDebt, debtDecimals, debtUnitPriceScaled);
-  const nextFactor = healthFactorBps(collateralValueScaled, nextDebtValue, liquidationThresholdBps);
+  const nextDebtValue = toValueScaled(nextDebt, debtDecimals, view.debtUnitPriceScaled);
+  const nextFactor = healthFactorBps(collateralValueScaled, nextDebtValue, view.liquidationThresholdBps);
   const nextTier = healthTier(nextFactor);
 
   const sliderAmount = typedAmount === null ? 0n : minBigInt(typedAmount, capacity);
@@ -147,7 +137,7 @@ export function DebtPanel() {
       label: isBorrow ? "You borrow" : "You repay",
       value: `${formatTokenAmount(amount ?? 0n, debtDecimals, 2)} ${AssetSymbol.Usdc}`,
     },
-    { label: "Borrow APR", value: formatValue(borrowAprDisplayRate, ValueFormat.Percent) },
+    { label: "Borrow APR", value: formatValue(bpsToRatio(view.borrowAprBps), ValueFormat.Percent) },
     { label: "Estimated network gas", value: estimatedGasUsd },
     {
       label: "Debt afterwards",
@@ -205,7 +195,7 @@ export function DebtPanel() {
               label={isBorrow ? "Amount to borrow" : "Amount to repay"}
               symbol={AssetSymbol.Usdc}
               decimals={debtDecimals}
-              unitPrice={assetPrices[AssetSymbol.Usdc]}
+              unitPrice={view.debtPrice}
               value={rawAmount}
               onChange={setRawAmount}
               maxAmount={isBorrow ? capacity : minBigInt(debtOutstanding, walletUsdc)}
@@ -226,7 +216,7 @@ export function DebtPanel() {
           ) : null}
 
           {isBorrow && isLiquidityConstrained ? (
-            <InsufficientLiquidityNotice availableLiquidity={poolAvailableLiquidity} />
+            <InsufficientLiquidityNotice availableLiquidity={view.availableLiquidity} />
           ) : null}
 
           {canSubmit ? (

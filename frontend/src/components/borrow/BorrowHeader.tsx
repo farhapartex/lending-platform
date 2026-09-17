@@ -4,15 +4,17 @@ import { scaledValueToUsd } from "@/lib/health";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { borrowAprDisplayRate, borrowPageContent } from "@/content/borrow";
+import { borrowPageContent } from "@/content/borrow";
+import { bpsToRatio } from "@/lib/units";
 import { HealthBadge } from "@/components/borrow/HealthBadge";
 
 type BorrowHeaderProps = {
   tier: HealthTier;
   collateralValueScaled: bigint;
+  borrowAprBps: bigint;
 };
 
-export function BorrowHeader({ tier, collateralValueScaled }: BorrowHeaderProps) {
+export function BorrowHeader({ tier, collateralValueScaled, borrowAprBps }: BorrowHeaderProps) {
   return (
     <PageHeader
       title={borrowPageContent.title}
@@ -36,7 +38,7 @@ export function BorrowHeader({ tier, collateralValueScaled }: BorrowHeaderProps)
             <div className="flex flex-col gap-1 border-t border-line pt-4">
               <dt className="text-xs font-medium uppercase tracking-[0.08em] text-ink-faint">Borrow APR</dt>
               <dd className="text-lg font-semibold text-ink tabular-nums">
-                {formatValue(borrowAprDisplayRate, ValueFormat.Percent)}
+                {formatValue(bpsToRatio(borrowAprBps), ValueFormat.Percent)}
               </dd>
             </div>
           </dl>
