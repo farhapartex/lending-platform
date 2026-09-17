@@ -86,7 +86,7 @@ func (i *Ingestor) applyTransaction(
 		EventID:              record.ID,
 		UserID:               actor.ID,
 		MarketID:             i.params.Market.ID,
-		AssetID:              i.assetFor(event.Kind),
+		AssetID:              i.assetFor(event),
 		Kind:                 event.Kind,
 		Amount:               bigmath.FromBig(event.Amount),
 		HealthFactorAfterBps: event.HealthFactorBps,
@@ -141,11 +141,10 @@ func (i *Ingestor) applyLiquidation(
 	return nil
 }
 
-func (i *Ingestor) assetFor(kind domain.TransactionKind) int64 {
-	switch kind {
-	case domain.TransactionKindCollateralAdded, domain.TransactionKindCollateralWithdrawn:
+func (i *Ingestor) assetFor(event DecodedEvent) int64 {
+	if event.UsesCollateral {
 		return i.params.Market.CollateralAssetID
-	default:
-		return i.params.Market.DebtAssetID
 	}
+
+	return i.params.Market.DebtAssetID
 }

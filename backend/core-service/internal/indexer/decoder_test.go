@@ -198,3 +198,53 @@ func TestDecodeIgnoresEventsItDoesNotTrack(t *testing.T) {
 		t.Fatal("expected an untracked event to be ignored")
 	}
 }
+
+func TestDecodeRecordsSeizedCollateralAgainstTheBorrower(t *testing.T) {
+	decoder := newDecoder(t)
+
+	log := buildLog(t, bindings.CollateralVaultMetaData, vaultAddress, "CollateralSeized",
+		[]common.Hash{topicFor(alice), topicFor(liquidator)},
+		big.NewInt(1_800), big.NewInt(200))
+
+	event, ok := decoder.Decode(log)
+	if !ok {
+		t.Fatal("expected the seizure to decode")
+	}
+
+	if event.Kind != domain.TransactionKindLiquidation {
+		t.Fatalf("expected a liquidation, got %s", event.Kind)
+	}
+
+	if event.Actor != "0x90f79bf6eb2c4f870365e785982e1f101e93b906" {
+		t.Fatalf("expected the borrower to carry the loss, got %s", event.Actor)
+	}
+
+	if !event.UsesCollateral {
+		t.Fatal("expected the seizure to be counted against the collateral asset")
+	}
+
+	if event.Amount.Cmp(big.NewInt(1_800)) != 0 {
+		t.Fatalf("expected the seized amount, got %s", event.Amount)
+	}
+
+	if event.Payload["recipient"] != "0x976ea74026e726554db657fa54763abd0c3a0aa9" {
+		t.Fatalf("expected the liquidator to be named as recipient, got %v", event.Payload["recipient"])
+	}
+}
+
+func TestDecodeCountsCollateralMovesAgainstTheCollateralAsset(t *testing.T) {
+	decoder := newDecoder(t)
+
+	log := buildLog(t, bindings.CollateralVaultMetaData, vaultAddress, "CollateralDeposited",
+		[]common.Hash{topicFor(alice)},
+		big.NewInt(5), big.NewInt(5))
+
+	event, ok := decoder.Decode(log)
+	if !ok {
+		t.Fatal("expected the deposit to decode")
+	}
+
+	if !event.UsesCollateral {
+		t.Fatal("expected a collateral deposit to be counted against the collateral asset")
+	}
+}

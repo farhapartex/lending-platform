@@ -47,6 +47,7 @@ type DecodedEvent struct {
 	LogIndex        uint32
 	Payload         map[string]any
 	Liquidation     *LiquidationDetail
+	UsesCollateral  bool
 }
 
 type Decoder struct {
@@ -130,15 +131,34 @@ func (d *Decoder) decodePool(log types.Log) (DecodedEvent, bool) {
 
 func (d *Decoder) decodeVault(log types.Log) (DecodedEvent, bool) {
 	if added, err := d.vault.ParseCollateralDeposited(log); err == nil {
-		return base(log, domain.EventTypeCollateralAdded, domain.TransactionKindCollateralAdded,
+		event := base(log, domain.EventTypeCollateralAdded, domain.TransactionKindCollateralAdded,
 			added.Borrower, added.Amount,
-			map[string]any{"new_collateral": text(added.NewCollateral)}), true
+			map[string]any{"new_collateral": text(added.NewCollateral)})
+		event.UsesCollateral = true
+
+		return event, true
 	}
 
 	if removed, err := d.vault.ParseCollateralWithdrawn(log); err == nil {
-		return base(log, domain.EventTypeCollateralWithdrawn, domain.TransactionKindCollateralWithdrawn,
+		event := base(log, domain.EventTypeCollateralWithdrawn, domain.TransactionKindCollateralWithdrawn,
 			removed.Borrower, removed.Amount,
-			map[string]any{"new_collateral": text(removed.NewCollateral)}), true
+			map[string]any{"new_collateral": text(removed.NewCollateral)})
+		event.UsesCollateral = true
+
+		return event, true
+	}
+
+	if seized, err := d.vault.ParseCollateralSeized(log); err == nil {
+		event := base(log, domain.EventTypeLiquidation, domain.TransactionKindLiquidation,
+			seized.Borrower, seized.Amount,
+			map[string]any{
+				"new_collateral": text(seized.NewCollateral),
+				"recipient":      strings.ToLower(seized.Recipient.Hex()),
+				"movement":       "collateral_seized",
+			})
+		event.UsesCollateral = true
+
+		return event, true
 	}
 
 	return DecodedEvent{}, false
