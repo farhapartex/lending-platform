@@ -23,10 +23,10 @@ export type TrustSignal = {
 };
 
 export const heroContent = {
-  eyebrow: "Phase 1 · WETH / USDC market",
+  eyebrow: "WETH / USDC market · FUSD in development",
   title: "Put your crypto to work, or borrow against it without selling.",
   description:
-    "Lend stablecoins and earn interest that accrues every second. Or unlock liquidity from assets you already hold, with a safety score that tells you exactly where you stand at all times.",
+    "Lend stablecoins and earn interest that accrues every second. Or unlock liquidity from assets you already hold, with a safety score that tells you exactly where you stand at all times. A second way to borrow, minting our own dollar, is being built.",
   primaryCta: "Start lending",
   secondaryCta: "Borrow against collateral",
   custodyNote: "Non-custodial. No account and no password — connect a wallet and you are ready.",
@@ -46,6 +46,13 @@ export const valueProps: ValueProp[] = [
     title: "Borrow without selling",
     description:
       "Use the assets you already hold as collateral to unlock liquidity. Keep your upside, skip the paperwork, and repay whenever you choose.",
+  },
+  {
+    key: ValuePropKey.Mint,
+    icon: IconName.Coins,
+    title: "Or mint dollars yourself",
+    description:
+      "FUSD is a dollar the protocol creates against your collateral rather than borrowing it from a pool. No pool to run dry, and no interest to pay. Still being built.",
   },
   {
     key: ValuePropKey.Visibility,
@@ -117,4 +124,24 @@ export const practiceContent = {
   description:
     "Practice mode runs the real interface on a test network with fake money. Lend, borrow, push a position to liquidation, and see what happens before a single real asset is involved.",
   cta: "Open practice mode",
+} as const;
+
+export type BorrowRoute = {
+  key: string;
+  name: string;
+  status: string;
+  isLive: boolean;
+  summary: string;
+  costLabel: string;
+  terms: { label: string; value: string }[];
+  suitsYou: string;
+};
+
+export const borrowOrMintContent = {
+  eyebrow: "Two ways to borrow",
+  title: "Borrow someone else's dollars, or mint your own.",
+  description:
+    "Both lock the same collateral and both liquidate you if it falls too far. What differs is where the dollars come from, what they cost, and how much you can take.",
+  footnote:
+    "The market terms are read from the deployed contracts. The FUSD terms are the published design and are not live yet.",
 } as const;

@@ -21,7 +21,7 @@ export function Logo({ className, labelClassName }: LogoProps) {
           <path d="M6 15.5l4-4.5 3.5 3 4.5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </span>
-      <span className={cn("text-base font-semibold tracking-tight text-ink", labelClassName)}>FUSD</span>
+      <span className={cn("text-base font-semibold tracking-tight text-ink", labelClassName)}>Fusion</span>
     </Link>
   );
 }

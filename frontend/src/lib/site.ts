@@ -1,11 +1,12 @@
 import { AppRoute } from "@/lib/enums";
 
-export const siteName = "FUSD";
+export const siteName = "Fusion";
 
 export const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:5173";
 
 export const indexableRoutes: AppRoute[] = [
   AppRoute.Home,
+  AppRoute.Fusd,
   AppRoute.Markets,
   AppRoute.Lend,
   AppRoute.Borrow,

@@ -8,6 +8,7 @@ export enum AppRoute {
   History = "/history",
   Practice = "/practice",
   Welcome = "/welcome",
+  Fusd = "/fusd",
   Learn = "/learn",
   LearnHowItWorks = "/learn/how-it-works",
   LearnHealthScore = "/learn/health-score",
@@ -24,6 +25,13 @@ export enum SectionId {
   HowItWorks = "how-it-works",
   Fees = "fees",
   Trust = "trust",
+  BorrowOrMint = "borrow-or-mint",
+  FusdWhat = "what-fusd-is",
+  FusdHow = "how-fusd-works",
+  FusdTerms = "fusd-terms",
+  FusdUses = "fusd-uses",
+  FusdPeg = "fusd-peg",
+  FusdStatus = "fusd-status",
   Practice = "practice",
   MainContent = "main-content",
   ProtocolTotals = "protocol-totals",
@@ -302,6 +310,7 @@ export enum AssetRole {
 export enum ValuePropKey {
   Earn = "earn",
   Unlock = "unlock",
+  Mint = "mint",
   Visibility = "visibility",
 }
 
@@ -333,6 +342,8 @@ export enum NavLinkKey {
   HowItWorks = "howItWorks",
   Fees = "fees",
   Trust = "trust",
+  BorrowOrMint = "borrowOrMint",
+  Fusd = "fusd",
   Learn = "learn",
 }
 

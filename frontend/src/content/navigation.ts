@@ -15,6 +15,18 @@ export const marketingNavLinks: NavLink[] = [
     href: `#${SectionId.HowItWorks}`,
   },
   {
+    key: NavLinkKey.BorrowOrMint,
+    label: "Ways to borrow",
+    kind: NavLinkKind.Anchor,
+    href: `#${SectionId.BorrowOrMint}`,
+  },
+  {
+    key: NavLinkKey.Fusd,
+    label: "FUSD",
+    kind: NavLinkKind.Route,
+    href: AppRoute.Fusd,
+  },
+  {
     key: NavLinkKey.Fees,
     label: "Fees",
     kind: NavLinkKind.Anchor,
