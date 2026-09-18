@@ -187,6 +187,118 @@ export const glossaryEntries: GlossaryEntry[] = [
 
 export const docPages: DocPage[] = [
   {
+    key: DocKey.Stablecoin,
+    route: AppRoute.LearnStablecoin,
+    title: "FUSD, the dollar we issue",
+    summary:
+      "What a stablecoin is, why this one is backed by crypto rather than a bank, and how minting differs from borrowing from the pool.",
+    sections: [
+      {
+        id: "what-a-stablecoin-is",
+        title: "What a stablecoin is",
+        blocks: [
+          {
+            kind: DocBlockKind.Prose,
+            paragraphs: [
+              "Most crypto moves a lot. Ether can be worth 4,000 dollars in the morning and 3,400 by the evening. That is fine if you are trading and painful if you want to pay somebody, park money for a month, or price anything at all.",
+              "A stablecoin is a token meant to hold a steady value, almost always one US dollar. You hold 100 units and you expect to treat them as 100 dollars. It settles in seconds, crosses borders without asking permission, and works in any contract that speaks ERC20.",
+            ],
+          },
+          {
+            kind: DocBlockKind.Bullets,
+            items: [
+              "Backed by money in a bank. A company holds your dollar and issues a token. Simple and it holds the peg, but you trust the company and it can freeze you.",
+              "Backed by crypto in a contract. You lock up more than you take out and the contract issues against it. Nobody holds your money. You must overcollateralize, because the backing can fall.",
+              "Backed by an algorithm. The protocol mints and burns a second token to defend the price. This has failed hard and publicly. FUSD does not go near it.",
+            ],
+          },
+          {
+            kind: DocBlockKind.Callout,
+            tone: BadgeTone.Brand,
+            title: "FUSD is the second kind",
+            body:
+              "Crypto backed and overcollateralized. No bank account, no company holding reserves, and no address that can freeze or claw back your balance.",
+          },
+        ],
+      },
+      {
+        id: "minting-vs-borrowing",
+        title: "Minting is not the same as borrowing",
+        blocks: [
+          {
+            kind: DocBlockKind.Prose,
+            paragraphs: [
+              "This platform already lets you borrow USDC against WETH. FUSD looks similar from the outside and works differently underneath, and the difference decides which one suits you.",
+              "When you borrow USDC you are taking dollars somebody else deposited. They want paying for that, which is the borrow interest, and you can only take what is sitting in the pool unlent. When you mint FUSD nobody lent you anything. The protocol creates the token against your collateral, so there is no pool to run dry and nobody to pay.",
+            ],
+          },
+          {
+            kind: DocBlockKind.Bullets,
+            items: [
+              "Borrowing USDC lets you take up to 75% of your collateral value. Minting FUSD stops at 66.67%.",
+              "Borrowing costs interest that accrues every second. Minting FUSD costs nothing in version one.",
+              "Borrowing is capped by how much USDC the pool holds. Minting is capped only by what you have locked.",
+              "A USDC loan is liquidated in full at 80%. A FUSD position is liquidated when its health factor falls below 1, and can be closed in part.",
+            ],
+          },
+          {
+            kind: DocBlockKind.Callout,
+            tone: BadgeTone.Caution,
+            title: "The quiet difference",
+            body:
+              "A USDC loan grows on its own, because interest keeps adding to what you owe. Leave one open long enough and it drifts toward liquidation with nobody touching it. A FUSD position does not, so only the collateral price moves your health factor.",
+          },
+        ],
+      },
+      {
+        id: "the-health-factor",
+        title: "The health factor",
+        blocks: [
+          {
+            kind: DocBlockKind.Prose,
+            paragraphs: [
+              "One number decides everything. It is your collateral value multiplied by 0.6667, divided by the FUSD you have minted. Above 1 you are fine, exactly 1 is the edge, and below 1 anyone in the world can close your position.",
+              "Deposit 1 ETH at 3,000 dollars and mint 1,000 FUSD and you are at 2.0. You could mint up to 2,000 before reaching 1.0, but sitting on the line is a bad idea, because one price tick puts you under.",
+            ],
+          },
+          {
+            kind: DocBlockKind.Callout,
+            tone: BadgeTone.Critical,
+            title: "Liquidation pays a stranger to close you",
+            body:
+              "Whoever settles an unsafe position repays your debt and takes collateral worth 8 percent more, with another 2 percent going to the protocol reserve. It sounds harsh, and it is the mechanism that keeps every FUSD backed by something real.",
+          },
+        ],
+      },
+      {
+        id: "why-the-peg-holds",
+        title: "Why the peg holds",
+        blocks: [
+          {
+            kind: DocBlockKind.Prose,
+            paragraphs: [
+              "Two forces. If FUSD trades above a dollar, minting becomes profitable, so people mint and sell, supply rises and the price falls back. If it trades below, anyone holding debt can buy it cheaply and repay at full value, so they buy, supply shrinks and the price rises.",
+              "Underneath both, every FUSD is claimable against more than a dollar of collateral. That sets a floor on what the market believes it is worth.",
+            ],
+          },
+        ],
+      },
+      {
+        id: "not-live-yet",
+        title: "None of this is live yet",
+        blocks: [
+          {
+            kind: DocBlockKind.Callout,
+            tone: BadgeTone.Caution,
+            title: "Being built",
+            body:
+              "The token contract is written and tested. The engine that holds collateral, tracks debt and runs liquidations is still being written, so there is nothing to mint against today. Everything above describes how it will work, not something you can use.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     key: DocKey.HowItWorks,
     route: AppRoute.LearnHowItWorks,
     title: "How it works",

@@ -242,7 +242,7 @@ export default function FusdPage() {
           <Button href={AppRoute.Markets} size={ButtonSize.Lg} trailingIcon={IconName.ArrowRight}>
             See what is live today
           </Button>
-          <Button href={AppRoute.Learn} size={ButtonSize.Lg} variant={ButtonVariant.Secondary}>
+          <Button href={AppRoute.LearnStablecoin} size={ButtonSize.Lg} variant={ButtonVariant.Secondary}>
             Read the documentation
           </Button>
         </div>

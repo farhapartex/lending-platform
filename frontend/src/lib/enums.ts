@@ -11,6 +11,7 @@ export enum AppRoute {
   Fusd = "/fusd",
   Learn = "/learn",
   LearnHowItWorks = "/learn/how-it-works",
+  LearnStablecoin = "/learn/stablecoin",
   LearnHealthScore = "/learn/health-score",
   LearnLiquidation = "/learn/liquidation",
   LearnFees = "/learn/fees",
@@ -73,6 +74,7 @@ export enum WelcomeStepKey {
 
 export enum DocKey {
   HowItWorks = "howItWorks",
+  Stablecoin = "stablecoin",
   HealthScore = "healthScore",
   Liquidation = "liquidation",
   Fees = "fees",

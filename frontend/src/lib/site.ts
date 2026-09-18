@@ -15,6 +15,7 @@ export const indexableRoutes: AppRoute[] = [
   AppRoute.Welcome,
   AppRoute.Learn,
   AppRoute.LearnHowItWorks,
+  AppRoute.LearnStablecoin,
   AppRoute.LearnHealthScore,
   AppRoute.LearnLiquidation,
   AppRoute.LearnFees,
