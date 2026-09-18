@@ -38,11 +38,15 @@ export const marketAssets: MarketAsset[] = [
 
 export const assetDecimals: Record<AssetSymbol, number> = {
   [AssetSymbol.Weth]: 18,
+  [AssetSymbol.Wbtc]: 8,
+  [AssetSymbol.Fusd]: 18,
   [AssetSymbol.Usdc]: 6,
 };
 
 export const assetPrices: Record<AssetSymbol, number> = {
   [AssetSymbol.Weth]: 3412.58,
+  [AssetSymbol.Wbtc]: 65000,
+  [AssetSymbol.Fusd]: 1,
   [AssetSymbol.Usdc]: 1,
 };
 

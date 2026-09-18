@@ -5,12 +5,13 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ButtonSize, ButtonVariant, IconName } from "@/lib/enums";
 import { cn } from "@/lib/cn";
-import { appNavLinks } from "@/content/navigation";
+import { productForPath } from "@/content/navigation";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { Icon } from "@/components/ui/Icon";
 import { Logo } from "@/components/ui/Logo";
 import { NetworkBadge } from "@/components/app/NetworkBadge";
+import { ProductSwitcher } from "@/components/app/ProductSwitcher";
 import { WalletConnectButton } from "@/components/app/WalletConnectButton";
 
 const mobilePanelId = "app-nav-panel";
@@ -27,14 +28,16 @@ export function TopNav() {
   const pathname = usePathname();
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const product = productForPath(pathname);
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-canvas/90 backdrop-blur-md">
       <Container className="flex h-16 items-center justify-between gap-4">
         <div className="flex items-center gap-6">
           <Logo labelClassName="lg:hidden xl:inline" />
+          <ProductSwitcher active={product} className="hidden lg:flex" />
           <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
-            {appNavLinks.map((link) => (
+            {product.links.map((link) => (
               <Link
                 key={link.key}
                 href={link.href}
@@ -67,7 +70,8 @@ export function TopNav() {
 
       <div id={mobilePanelId} hidden={!isOpen} className="border-t border-line bg-surface lg:hidden">
         <Container className="flex flex-col gap-1 py-4">
-          {appNavLinks.map((link) => (
+          <ProductSwitcher active={product} onNavigate={() => setIsOpen(false)} className="mb-2 self-start" />
+          {product.links.map((link) => (
             <Link
               key={link.key}
               href={link.href}

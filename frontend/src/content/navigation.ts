@@ -1,4 +1,4 @@
-import { AppNavLinkKey, AppRoute, FooterGroupKey, NavLinkKey, NavLinkKind, SectionId } from "@/lib/enums";
+import { AppNavLinkKey, ProductKey, AppRoute, FooterGroupKey, NavLinkKey, NavLinkKind, SectionId } from "@/lib/enums";
 
 export type NavLink = {
   key: NavLinkKey;
@@ -52,15 +52,50 @@ export type AppNavLink = {
   href: AppRoute;
 };
 
-export const appNavLinks: AppNavLink[] = [
-  { key: AppNavLinkKey.Markets, label: "Markets", href: AppRoute.Markets },
-  { key: AppNavLinkKey.Lend, label: "Lend", href: AppRoute.Lend },
-  { key: AppNavLinkKey.Borrow, label: "Borrow", href: AppRoute.Borrow },
+export type NavProduct = {
+  key: ProductKey;
+  label: string;
+  home: AppRoute;
+  links: AppNavLink[];
+};
+
+const sharedLinks: AppNavLink[] = [
   { key: AppNavLinkKey.Dashboard, label: "Dashboard", href: AppRoute.Dashboard },
   { key: AppNavLinkKey.History, label: "History", href: AppRoute.History },
-  { key: AppNavLinkKey.Liquidations, label: "Liquidations", href: AppRoute.Liquidations },
   { key: AppNavLinkKey.Learn, label: "Learn", href: AppRoute.Learn },
 ];
+
+export const navProducts: NavProduct[] = [
+  {
+    key: ProductKey.Lending,
+    label: "Lending",
+    home: AppRoute.Markets,
+    links: [
+      { key: AppNavLinkKey.Markets, label: "Markets", href: AppRoute.Markets },
+      { key: AppNavLinkKey.Lend, label: "Lend", href: AppRoute.Lend },
+      { key: AppNavLinkKey.Borrow, label: "Borrow", href: AppRoute.Borrow },
+      { key: AppNavLinkKey.Liquidations, label: "Liquidations", href: AppRoute.Liquidations },
+      ...sharedLinks,
+    ],
+  },
+  {
+    key: ProductKey.Fusd,
+    label: "FUSD",
+    home: AppRoute.FusdVault,
+    links: [
+      { key: AppNavLinkKey.FusdVault, label: "Vault", href: AppRoute.FusdVault },
+      { key: AppNavLinkKey.FusdLiquidations, label: "Liquidations", href: AppRoute.FusdLiquidations },
+      { key: AppNavLinkKey.FusdBacking, label: "Backing", href: AppRoute.FusdBacking },
+      ...sharedLinks,
+    ],
+  },
+];
+
+export function productForPath(pathname: string): NavProduct {
+  const fusd = navProducts[1];
+
+  return pathname.startsWith("/fusd") ? fusd : navProducts[0];
+}
 
 export type FooterLink = {
   label: string;

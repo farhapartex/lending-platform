@@ -9,6 +9,9 @@ export enum AppRoute {
   Practice = "/practice",
   Welcome = "/welcome",
   Fusd = "/fusd",
+  FusdVault = "/fusd/vault",
+  FusdLiquidations = "/fusd/liquidations",
+  FusdBacking = "/fusd/backing",
   Learn = "/learn",
   LearnHowItWorks = "/learn/how-it-works",
   LearnStablecoin = "/learn/stablecoin",
@@ -275,6 +278,11 @@ export enum RateExplainerPointKey {
   Withdrawals = "withdrawals",
 }
 
+export enum ProductKey {
+  Lending = "lending",
+  Fusd = "fusd",
+}
+
 export enum AppNavLinkKey {
   Markets = "markets",
   Lend = "lend",
@@ -283,6 +291,9 @@ export enum AppNavLinkKey {
   History = "history",
   Liquidations = "liquidations",
   Learn = "learn",
+  FusdVault = "fusdVault",
+  FusdLiquidations = "fusdLiquidations",
+  FusdBacking = "fusdBacking",
 }
 
 export enum ProtocolStatKey {
@@ -301,6 +312,8 @@ export enum MarketMetricKey {
 
 export enum AssetSymbol {
   Weth = "WETH",
+  Wbtc = "WBTC",
+  Fusd = "FUSD",
   Usdc = "USDC",
 }
 
