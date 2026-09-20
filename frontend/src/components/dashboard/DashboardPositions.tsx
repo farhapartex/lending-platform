@@ -1,10 +1,12 @@
 "use client";
 
-import { AppRoute, AssetSymbol, BadgeTone, ButtonVariant, IconName, SectionId } from "@/lib/enums";
-import { healthTier, toPriceScaled, toValueScaled } from "@/lib/health";
+import { AppRoute, AssetSymbol, BadgeTone, ButtonVariant, IconName, ValueFormat } from "@/lib/enums";
+import { formatValue } from "@/lib/format";
+import { healthTier, scaledValueToUsd, toPriceScaled, toValueScaled } from "@/lib/health";
+import { formatTokenAmount } from "@/lib/token";
 import { isNoDebtHealthFactor } from "@/lib/units";
 import { dashboardContent } from "@/content/dashboard";
-import { assetPrices, debtDecimals } from "@/content/protocol";
+import { assetPrices, collateralDecimals, debtDecimals } from "@/content/protocol";
 import { useAccountData } from "@/hooks/useAccountData";
 import { useMarketData } from "@/hooks/useMarketData";
 import { useOraclePrice } from "@/hooks/useOraclePrice";
@@ -17,11 +19,11 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { HealthBar } from "@/components/borrow/HealthBar";
 import { HealthScoreGauge } from "@/components/borrow/HealthScoreGauge";
 import { LiquidationRiskWarning } from "@/components/borrow/LiquidationRiskWarning";
-import { LenderPositionCard } from "@/components/lend/LenderPositionCard";
-import { BorrowerPositionCard } from "@/components/dashboard/BorrowerPositionCard";
-import { PositionOverviewHeader } from "@/components/dashboard/PositionOverviewHeader";
 import { RecentActivityList } from "@/components/dashboard/RecentActivityList";
 import { RiskLegend } from "@/components/dashboard/RiskLegend";
+import { MetricCard } from "@/components/portal/MetricCard";
+import { MetricGrid } from "@/components/portal/MetricGrid";
+import { PortalSection } from "@/components/portal/PortalSection";
 
 const fallbackDebtPriceScaled = toPriceScaled(assetPrices[AssetSymbol.Usdc]);
 
@@ -48,9 +50,9 @@ export function DashboardPositions() {
 
   if (account.data === undefined || market.data === undefined) {
     return (
-      <div className="flex flex-col gap-6">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-64 w-full" />
+      <div className="flex flex-col gap-4">
+        <Skeleton className="h-24 w-full rounded-card" />
+        <Skeleton className="h-56 w-full rounded-card" />
       </div>
     );
   }
@@ -80,18 +82,37 @@ export function DashboardPositions() {
 
   const debtPriceScaled = debtPrice.data === undefined ? fallbackDebtPriceScaled : debtPrice.data.price;
   const suppliedValueScaled = toValueScaled(data.supplyAssets, debtDecimals, debtPriceScaled);
+  const netValueScaled = suppliedValueScaled + data.collateralValue - data.debtValue;
   const isValued = !data.priceStale;
   const factorBps =
     !isValued || data.debtAmount <= 0n || isNoDebtHealthFactor(data.healthFactorBps) ? null : data.healthFactorBps;
   const tier = healthTier(factorBps);
 
   return (
-    <div className="flex flex-col gap-6">
-      <PositionOverviewHeader
-        suppliedValueScaled={suppliedValueScaled}
-        collateralValueScaled={data.collateralValue}
-        debtValueScaled={data.debtValue}
-      />
+    <>
+      <MetricGrid>
+        <MetricCard
+          label="Supplied"
+          value={formatValue(scaledValueToUsd(suppliedValueScaled), ValueFormat.UsdPrice)}
+          hint={`${formatTokenAmount(data.supplyAssets, debtDecimals, 2)} ${AssetSymbol.Usdc} earning interest`}
+        />
+        <MetricCard
+          label="Collateral"
+          value={formatValue(scaledValueToUsd(data.collateralValue), ValueFormat.UsdPrice)}
+          hint={`${formatTokenAmount(data.collateralAmount, collateralDecimals, 4)} ${AssetSymbol.Weth} locked`}
+        />
+        <MetricCard
+          label="Borrowed"
+          value={formatValue(scaledValueToUsd(data.debtValue), ValueFormat.UsdPrice)}
+          hint={`${formatTokenAmount(data.debtAmount, debtDecimals, 2)} ${AssetSymbol.Usdc} owed`}
+        />
+        <MetricCard
+          label="Net position"
+          value={formatValue(scaledValueToUsd(netValueScaled), ValueFormat.UsdPrice)}
+          hint="Supplied plus collateral, less debt"
+          emphasis
+        />
+      </MetricGrid>
 
       {isValued ? null : (
         <Alert title="We cannot value your position right now" tone={BadgeTone.Caution} icon={IconName.Warning}>
@@ -103,47 +124,35 @@ export function DashboardPositions() {
       {isValued ? <LiquidationRiskWarning tier={tier} /> : null}
 
       {isValued ? (
-      <Card className="grid gap-8 p-6 sm:p-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
-        <div className="flex flex-col gap-6">
-          <HealthScoreGauge factorBps={factorBps} tier={tier} />
-          <HealthBar
-            factorBps={factorBps}
-            tier={tier}
-            maxLtvBps={market.data.maxLtvBps}
-            liquidationThresholdBps={market.data.liquidationThresholdBps}
-          />
-        </div>
-        <div className="border-t border-line pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
-          <RiskLegend />
-        </div>
-      </Card>
+        <PortalSection title="Safety score" description={dashboardContent.overviewTitle}>
+          <Card className="grid gap-6 p-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,17rem)]">
+            <div className="flex flex-col gap-5">
+              <HealthScoreGauge factorBps={factorBps} tier={tier} />
+              <HealthBar
+                factorBps={factorBps}
+                tier={tier}
+                maxLtvBps={market.data.maxLtvBps}
+                liquidationThresholdBps={market.data.liquidationThresholdBps}
+              />
+            </div>
+            <div className="border-t border-line pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+              <RiskLegend />
+            </div>
+          </Card>
+        </PortalSection>
       ) : null}
 
-      <div className="flex flex-col gap-4">
-        <h3 id={`${SectionId.DashboardPositions}-heading`} className="text-lg font-semibold tracking-tight text-ink">
-          {dashboardContent.positionsTitle}
-        </h3>
-        <div className="grid gap-6 lg:grid-cols-2">
-          <LenderPositionCard depositedBalance={data.supplyAssets} />
-          <BorrowerPositionCard
-            factorBps={factorBps}
-            tier={tier}
-            collateralValueScaled={data.collateralValue}
-            collateralDeposited={data.collateralAmount}
-            debtOutstanding={data.debtAmount}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <h3 id={`${SectionId.DashboardActivity}-heading`} className="text-lg font-semibold tracking-tight text-ink">
-            {dashboardContent.activityTitle}
-          </h3>
-          <p className="text-sm leading-relaxed text-ink-soft">{dashboardContent.activityDescription}</p>
-        </div>
+      <PortalSection
+        title={dashboardContent.activityTitle}
+        description={dashboardContent.activityDescription}
+        actions={
+          <Button href={AppRoute.History} variant={ButtonVariant.Subtle} trailingIcon={IconName.ArrowRight}>
+            View all
+          </Button>
+        }
+      >
         <RecentActivityList />
-      </div>
-    </div>
+      </PortalSection>
+    </>
   );
 }
