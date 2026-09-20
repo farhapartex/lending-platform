@@ -186,10 +186,12 @@ export function LendActionPanel({ view }: LendActionPanelProps) {
           messages={isDeposit ? depositMessagesFor(minimumDeposit) : withdrawMessages}
         />
 
-        {isDeposit ? null : <WithdrawLiquidityNotice
+        {isDeposit ? null : (
+          <WithdrawLiquidityNotice
             withdrawable={withdrawable}
             isLiquidityConstrained={poolAvailableLiquidity < depositedBalance}
-          />}
+          />
+        )}
 
         {canSubmit ? <TxReviewSheet title="Review" rows={reviewRows} /> : null}
 
