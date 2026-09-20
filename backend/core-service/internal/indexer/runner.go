@@ -8,16 +8,25 @@ import (
 	"sort"
 	"time"
 
-	"github.com/farhapartex/lending-platform/core-service/internal/chain"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/farhapartex/lending-platform/core-service/internal/config"
 	"github.com/farhapartex/lending-platform/core-service/internal/domain"
 )
+
+type ChainReader interface {
+	HeadBlock(ctx context.Context) (uint64, error)
+	SafeHeadBlock(ctx context.Context, confirmations uint64) (uint64, error)
+	BlockByNumber(ctx context.Context, number uint64) (domain.BlockRef, error)
+	Logs(ctx context.Context, from uint64, to uint64, addresses []common.Address) ([]types.Log, error)
+}
 
 const reorgLookback = 32
 
 type RunnerParams struct {
 	Chain       config.ChainConfig
-	Client      *chain.Client
+	Client      ChainReader
 	Decoder     *Decoder
 	Ingestor    *Ingestor
 	Events      domain.ProtocolEventRepository
@@ -194,6 +203,15 @@ func (r *Runner) loadCheckpoint(ctx context.Context) (domain.IndexerCheckpoint, 
 func (r *Runner) reconcile(ctx context.Context, checkpoint *domain.IndexerCheckpoint) error {
 	if checkpoint.LastProcessedBlock <= 0 {
 		return nil
+	}
+
+	head, err := r.params.Client.HeadBlock(ctx)
+	if err != nil {
+		return err
+	}
+
+	if uint64(checkpoint.LastProcessedBlock) > head {
+		return r.rollback(ctx, checkpoint, int64(head), "the chain is shorter than the recorded progress")
 	}
 
 	stored, err := r.params.Blocks.ByNumber(ctx, r.params.Chain.ChainID, checkpoint.LastProcessedBlock)
