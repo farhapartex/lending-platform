@@ -1,96 +1,101 @@
 "use client";
 
-import { ButtonVariant, IconName, SectionId, SectionTone, WalletGatePurpose } from "@/lib/enums";
-import { lendPageContent } from "@/content/lend";
+import { AssetSymbol, ButtonVariant, IconName, ValueFormat } from "@/lib/enums";
+import { formatValue } from "@/lib/format";
+import { formatTokenAmount } from "@/lib/token";
+import { bpsToRatio } from "@/lib/units";
+import { debtAmountToNumber } from "@/lib/market";
+import { lendAssetDecimals, lendPageContent } from "@/content/lend";
 import { usePositionView } from "@/hooks/usePositionView";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Section } from "@/components/ui/Section";
-import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { WalletGate } from "@/components/app/WalletGate";
 import { MarketUtilization } from "@/components/markets/MarketUtilization";
 import { PriceStalenessWarning } from "@/components/markets/PriceStalenessWarning";
 import { LendActionPanel } from "@/components/lend/LendActionPanel";
-import { LendHeader } from "@/components/lend/LendHeader";
 import { LenderPositionCard } from "@/components/lend/LenderPositionCard";
 import { SupplyApyCard } from "@/components/lend/SupplyApyCard";
+import { MetricCard } from "@/components/portal/MetricCard";
+import { MetricGrid } from "@/components/portal/MetricGrid";
+import { PortalSection } from "@/components/portal/PortalSection";
 
 export function LendView() {
   const { view, isError, refetch } = usePositionView();
 
   if (isError) {
     return (
-      <Section id={SectionId.LendAction} tone={SectionTone.Canvas}>
-        <EmptyState
-          title="We could not read this market"
-          description="The blockchain node did not answer. Nothing has changed on chain, and this clears once the connection recovers."
-          icon={IconName.Warning}
-          action={
-            <Button variant={ButtonVariant.Subtle} onClick={refetch}>
-              Try again
-            </Button>
-          }
-        />
-      </Section>
+      <EmptyState
+        title="We could not read this market"
+        description="The blockchain node did not answer. Nothing has changed on chain, and this clears once the connection recovers."
+        icon={IconName.Warning}
+        action={
+          <Button variant={ButtonVariant.Subtle} onClick={refetch}>
+            Try again
+          </Button>
+        }
+      />
     );
   }
 
   if (view === undefined) {
     return (
-      <Section id={SectionId.LendAction} tone={SectionTone.Canvas}>
-        <div className="flex flex-col gap-6">
-          <Skeleton className="h-40 w-full" />
-          <Skeleton className="h-72 w-full" />
-        </div>
-      </Section>
+      <div className="flex flex-col gap-4">
+        <Skeleton className="h-24 w-full rounded-card" />
+        <Skeleton className="h-96 w-full rounded-card" />
+      </div>
     );
   }
 
   return (
     <>
-      <LendHeader supplyAprBps={view.supplyAprBps} totalSupplied={view.totalSupplied} />
-
       <PriceStalenessWarning />
 
-      <Section id={SectionId.LendAction} tone={SectionTone.Canvas}>
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:gap-10">
-          <div className="flex flex-col gap-8">
-            <div className="flex flex-col gap-4">
-              <SectionHeading
-                sectionId={SectionId.LendPosition}
-                eyebrow="Position"
-                title={lendPageContent.positionTitle}
-                description={lendPageContent.positionDescription}
-              />
-              <WalletGate purpose={WalletGatePurpose.PersonalData}>
-                <LenderPositionCard depositedBalance={view.suppliedBalance} />
-              </WalletGate>
-            </div>
+      <MetricGrid>
+        <MetricCard
+          label="Your balance"
+          value={`${formatTokenAmount(view.suppliedBalance, lendAssetDecimals, 2)} ${AssetSymbol.Usdc}`}
+          hint="Interest already included"
+          emphasis
+        />
+        <MetricCard
+          label="Supply APY"
+          value={formatValue(bpsToRatio(view.supplyAprBps), ValueFormat.Percent)}
+          hint="Moves with pool utilization"
+        />
+        <MetricCard
+          label="Pool size"
+          value={formatValue(debtAmountToNumber(view.totalSupplied), ValueFormat.UsdCompact)}
+          hint="Deposited by every lender"
+        />
+        <MetricCard
+          label="Available to withdraw"
+          value={formatValue(debtAmountToNumber(view.availableLiquidity), ValueFormat.UsdCompact)}
+          hint="Not currently lent out"
+        />
+      </MetricGrid>
 
-            <div className="flex flex-col gap-4">
-              <h2 id={`${SectionId.LendMarket}-heading`} className="text-lg font-semibold tracking-tight text-ink">
-                {lendPageContent.marketTitle}
-              </h2>
-              <p className="max-w-2xl text-sm leading-relaxed text-ink-soft">{lendPageContent.marketDescription}</p>
-              <div className="grid gap-5 sm:grid-cols-2">
-                <SupplyApyCard supplyAprBps={view.supplyAprBps} />
-                <div className="rounded-card border border-line bg-surface p-6">
-                  <MarketUtilization />
-                </div>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
+        <div className="flex flex-col gap-6">
+          <PortalSection title={lendPageContent.positionTitle} description={lendPageContent.positionDescription}>
+            <LenderPositionCard depositedBalance={view.suppliedBalance} />
+          </PortalSection>
+
+          <PortalSection title={lendPageContent.marketTitle} description={lendPageContent.marketDescription}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <SupplyApyCard supplyAprBps={view.supplyAprBps} />
+              <div className="rounded-card border border-line bg-surface p-5">
+                <MarketUtilization />
               </div>
             </div>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <h2 id={`${SectionId.LendAction}-heading`} className="text-lg font-semibold tracking-tight text-ink">
-              {lendPageContent.actionTitle}
-            </h2>
-            <p className="text-sm leading-relaxed text-ink-soft">{lendPageContent.actionDescription}</p>
-            <LendActionPanel view={view} />
-          </div>
+          </PortalSection>
         </div>
-      </Section>
+
+        <div className="lg:sticky lg:top-24 lg:self-start">
+          <PortalSection title={lendPageContent.actionTitle} description={lendPageContent.actionDescription}>
+            <LendActionPanel view={view} />
+          </PortalSection>
+        </div>
+      </div>
     </>
   );
 }

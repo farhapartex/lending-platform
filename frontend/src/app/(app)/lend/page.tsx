@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { lendPageContent } from "@/content/lend";
 import { LendView } from "@/components/lend/LendView";
+import { PortalPage } from "@/components/portal/PortalPage";
 
 export const metadata: Metadata = {
   title: "Lend",
@@ -7,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function LendPage() {
-  return <LendView />;
+  return (
+    <PortalPage title={lendPageContent.title} description={lendPageContent.description}>
+      <LendView />
+    </PortalPage>
+  );
 }
