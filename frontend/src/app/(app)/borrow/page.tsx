@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { borrowPageContent } from "@/content/borrow";
 import { BorrowView } from "@/components/borrow/BorrowView";
+import { PortalPage } from "@/components/portal/PortalPage";
 
 export const metadata: Metadata = {
   title: "Borrow",
@@ -8,5 +10,9 @@ export const metadata: Metadata = {
 };
 
 export default function BorrowPage() {
-  return <BorrowView />;
+  return (
+    <PortalPage title={borrowPageContent.title} description={borrowPageContent.description}>
+      <BorrowView />
+    </PortalPage>
+  );
 }

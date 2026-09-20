@@ -1,123 +1,124 @@
 "use client";
 
-import { BadgeTone, ButtonVariant, IconName, SectionId, SectionTone, WalletGatePurpose } from "@/lib/enums";
-import { borrowPageContent } from "@/content/borrow";
+import { AssetSymbol, BadgeTone, ButtonVariant, IconName, ValueFormat } from "@/lib/enums";
+import { formatValue } from "@/lib/format";
+import { formatHealthFactor, scaledValueToUsd } from "@/lib/health";
+import { formatTokenAmount } from "@/lib/token";
+import { borrowPageContent, collateralDecimals, debtDecimals } from "@/content/borrow";
 import { usePositionView } from "@/hooks/usePositionView";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Section } from "@/components/ui/Section";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { WalletGate } from "@/components/app/WalletGate";
-import { BorrowHeader } from "@/components/borrow/BorrowHeader";
+import { PriceStalenessWarning } from "@/components/markets/PriceStalenessWarning";
 import { CollateralPanel } from "@/components/borrow/CollateralPanel";
 import { DebtPanel } from "@/components/borrow/DebtPanel";
 import { FullLiquidationNotice } from "@/components/borrow/FullLiquidationNotice";
+import { HealthBadge } from "@/components/borrow/HealthBadge";
 import { HealthBar } from "@/components/borrow/HealthBar";
 import { HealthScoreGauge } from "@/components/borrow/HealthScoreGauge";
 import { LiquidationRiskWarning } from "@/components/borrow/LiquidationRiskWarning";
 import { PriceDropSimulator } from "@/components/borrow/PriceDropSimulator";
-import { PriceStalenessWarning } from "@/components/markets/PriceStalenessWarning";
+import { MetricCard } from "@/components/portal/MetricCard";
+import { MetricGrid } from "@/components/portal/MetricGrid";
+import { PortalSection } from "@/components/portal/PortalSection";
 
 export function BorrowView() {
   const { view, isError, refetch } = usePositionView();
 
   if (isError) {
     return (
-      <Section id={SectionId.BorrowHealth} tone={SectionTone.Canvas}>
-        <EmptyState
-          title="We could not read this market"
-          description="The blockchain node did not answer. Nothing has changed on chain, and this clears once the connection recovers."
-          icon={IconName.Warning}
-          action={
-            <Button variant={ButtonVariant.Subtle} onClick={refetch}>
-              Try again
-            </Button>
-          }
-        />
-      </Section>
+      <EmptyState
+        title="We could not read this market"
+        description="The blockchain node did not answer. Nothing has changed on chain, and this clears once the connection recovers."
+        icon={IconName.Warning}
+        action={
+          <Button variant={ButtonVariant.Subtle} onClick={refetch}>
+            Try again
+          </Button>
+        }
+      />
     );
   }
 
   if (view === undefined) {
     return (
-      <Section id={SectionId.BorrowHealth} tone={SectionTone.Canvas}>
-        <div className="flex flex-col gap-6">
-          <Skeleton className="h-40 w-full" />
-          <Skeleton className="h-72 w-full" />
-        </div>
-      </Section>
+      <div className="flex flex-col gap-4">
+        <Skeleton className="h-24 w-full rounded-card" />
+        <Skeleton className="h-96 w-full rounded-card" />
+      </div>
     );
   }
 
   return (
     <>
-      <BorrowHeader
-        tier={view.tier}
-        collateralValueScaled={view.collateralValueScaled}
-        borrowAprBps={view.borrowAprBps}
-      />
-
       <PriceStalenessWarning />
 
-      <Section id={SectionId.BorrowHealth} tone={SectionTone.Canvas}>
-        <div className="flex flex-col gap-6">
-          <h2 id={`${SectionId.BorrowHealth}-heading`} className="sr-only">
-            {borrowPageContent.healthTitle}
-          </h2>
+      <MetricGrid>
+        <MetricCard
+          label="Collateral"
+          value={formatValue(scaledValueToUsd(view.collateralValueScaled), ValueFormat.UsdPrice)}
+          hint={`${formatTokenAmount(view.collateralDeposited, collateralDecimals, 4)} ${AssetSymbol.Weth} locked`}
+        />
+        <MetricCard
+          label="Borrowed"
+          value={`${formatTokenAmount(view.debtOutstanding, debtDecimals, 2)} ${AssetSymbol.Usdc}`}
+          hint="Interest accrues every second"
+        />
+        <MetricCard
+          label="Available to borrow"
+          value={`${formatTokenAmount(view.maxBorrowable, debtDecimals, 2)} ${AssetSymbol.Usdc}`}
+          hint="Limited by collateral and pool liquidity"
+        />
+        <MetricCard
+          label="Health factor"
+          value={view.isValued ? formatHealthFactor(view.factorBps) : "—"}
+          hint={view.isValued ? "Liquidation below 1.00" : "Waiting for a usable price"}
+          accessory={view.isValued ? <HealthBadge tier={view.tier} /> : null}
+          emphasis
+        />
+      </MetricGrid>
 
-          <WalletGate purpose={WalletGatePurpose.PersonalData}>
-            {view.isValued ? (
-            <div className="flex flex-col gap-6">
-              <Card className="flex flex-col gap-6 p-6 sm:p-7">
-                <HealthScoreGauge factorBps={view.factorBps} tier={view.tier} />
-                <HealthBar
-                  factorBps={view.factorBps}
-                  tier={view.tier}
-                  maxLtvBps={view.maxLtvBps}
-                  liquidationThresholdBps={view.liquidationThresholdBps}
-                />
-              </Card>
+      {view.isValued ? null : (
+        <Alert title="We cannot value your position right now" tone={BadgeTone.Caution} icon={IconName.Warning}>
+          The WETH price feed has not reported recently, so your safety score cannot be calculated. Your collateral and
+          loan are untouched, and the protocol refuses to borrow against or release collateral at a price it cannot
+          trust. Repaying still works.
+        </Alert>
+      )}
 
-              <LiquidationRiskWarning tier={view.tier} />
-            </div>
-            ) : (
-              <Alert title="We cannot value your position right now" tone={BadgeTone.Caution} icon={IconName.Warning}>
-                The WETH price feed has not reported recently, so your safety score cannot be calculated. Your
-                collateral and loan are untouched, and the protocol refuses to borrow against or release collateral at
-                a price it cannot trust. Repaying still works.
-              </Alert>
-            )}
-          </WalletGate>
+      {view.isValued ? <LiquidationRiskWarning tier={view.tier} /> : null}
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <h3 id={`${SectionId.BorrowCollateral}-heading`} className="text-lg font-semibold tracking-tight text-ink">
-                  {borrowPageContent.collateralTitle}
-                </h3>
-                <p className="text-sm leading-relaxed text-ink-soft">{borrowPageContent.collateralDescription}</p>
-              </div>
-              <CollateralPanel view={view} />
-            </div>
+      {view.isValued ? (
+        <PortalSection title={borrowPageContent.healthTitle} description={borrowPageContent.healthDescription}>
+          <Card className="flex flex-col gap-5 p-5">
+            <HealthScoreGauge factorBps={view.factorBps} tier={view.tier} />
+            <HealthBar
+              factorBps={view.factorBps}
+              tier={view.tier}
+              maxLtvBps={view.maxLtvBps}
+              liquidationThresholdBps={view.liquidationThresholdBps}
+            />
+          </Card>
+        </PortalSection>
+      ) : null}
 
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <h3 id={`${SectionId.BorrowDebt}-heading`} className="text-lg font-semibold tracking-tight text-ink">
-                  {borrowPageContent.debtTitle}
-                </h3>
-                <p className="text-sm leading-relaxed text-ink-soft">{borrowPageContent.debtDescription}</p>
-              </div>
-              <DebtPanel view={view} />
-            </div>
-          </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <PortalSection title={borrowPageContent.collateralTitle} description={borrowPageContent.collateralDescription}>
+          <CollateralPanel view={view} />
+        </PortalSection>
 
-          <PriceDropSimulator />
+        <PortalSection title={borrowPageContent.debtTitle} description={borrowPageContent.debtDescription}>
+          <DebtPanel view={view} />
+        </PortalSection>
+      </div>
 
-          <FullLiquidationNotice />
-        </div>
-      </Section>
+      <PortalSection title={borrowPageContent.simulatorTitle} description={borrowPageContent.simulatorDescription}>
+        <PriceDropSimulator />
+      </PortalSection>
+
+      <FullLiquidationNotice />
     </>
   );
 }
