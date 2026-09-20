@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import { SectionId, SectionTone } from "@/lib/enums";
 import { liquidationsPageContent } from "@/content/liquidations";
-import { Container } from "@/components/ui/Container";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { Section } from "@/components/ui/Section";
 import { HowLiquidationWorksCallout } from "@/components/liquidations/HowLiquidationWorksCallout";
 import { LiquidationHistoryPanel } from "@/components/liquidations/LiquidationHistoryPanel";
 import { LiquidationsPanel } from "@/components/liquidations/LiquidationsPanel";
+import { PortalPage } from "@/components/portal/PortalPage";
+import { PortalSection } from "@/components/portal/PortalSection";
 
 export const metadata: Metadata = {
   title: "Liquidations",
@@ -16,44 +14,24 @@ export const metadata: Metadata = {
 
 export default function LiquidationsPage() {
   return (
-    <>
-      <PageHeader title={liquidationsPageContent.title} description={liquidationsPageContent.description} />
+    <PortalPage title={liquidationsPageContent.title} description={liquidationsPageContent.description}>
+      <PortalSection title={liquidationsPageContent.listTitle}>
+        <LiquidationsPanel />
+      </PortalSection>
 
-      <Section id={SectionId.LiquidationsList} tone={SectionTone.Canvas}>
-        <h2 id={`${SectionId.LiquidationsList}-heading`} className="sr-only">
-          {liquidationsPageContent.listTitle}
-        </h2>
+      <HowLiquidationWorksCallout />
 
-        <div className="flex flex-col gap-6">
-          <LiquidationsPanel />
-          <HowLiquidationWorksCallout />
-        </div>
-      </Section>
+      <PortalSection
+        title={liquidationsPageContent.historyTitle}
+        description={liquidationsPageContent.historyDescription}
+      >
+        <LiquidationHistoryPanel />
+      </PortalSection>
 
-      <Section id={SectionId.LiquidationsHistory} tone={SectionTone.Surface}>
-        <div className="flex flex-col gap-5">
-          <div className="flex flex-col gap-1.5">
-            <h2
-              id={`${SectionId.LiquidationsHistory}-heading`}
-              className="text-lg font-semibold tracking-tight text-ink"
-            >
-              {liquidationsPageContent.historyTitle}
-            </h2>
-            <p className="max-w-2xl text-sm leading-relaxed text-ink-soft">
-              {liquidationsPageContent.historyDescription}
-            </p>
-          </div>
-
-          <LiquidationHistoryPanel />
-        </div>
-      </Section>
-
-      <Container className="pb-4">
-        <p className="text-xs text-ink-faint">
-          These lists are rebuilt from indexed contract events. Eligibility is always re-checked on-chain when a
-          liquidation runs, so a position that recovers in the meantime cannot be liquidated.
-        </p>
-      </Container>
-    </>
+      <p className="text-xs leading-relaxed text-ink-faint">
+        These lists are rebuilt from indexed contract events. Eligibility is always re-checked on-chain when a
+        liquidation runs, so a position that recovers in the meantime cannot be liquidated.
+      </p>
+    </PortalPage>
   );
 }
