@@ -24,7 +24,6 @@ import { AmountValidationMessage } from "@/components/tx/AmountValidationMessage
 import { ApprovalStep } from "@/components/tx/ApprovalStep";
 import { TxReviewSheet } from "@/components/tx/TxReviewSheet";
 import { TxStatusTracker } from "@/components/tx/TxStatusTracker";
-import { WalletGate } from "@/components/app/WalletGate";
 import { WithdrawLiquidityNotice } from "@/components/lend/WithdrawLiquidityNotice";
 
 const amountInputId = "lend-amount";
@@ -166,69 +165,67 @@ export function LendActionPanel({ view }: LendActionPanelProps) {
         }}
       />
 
-      <WalletGate>
-        <div className="flex flex-col gap-5">
-          <AssetAmountInput
-            id={amountInputId}
-            label={isDeposit ? "Amount to deposit" : "Amount to withdraw"}
-            symbol={AssetSymbol.Usdc}
-            decimals={lendAssetDecimals}
-            unitPrice={unitPrice}
-            value={rawAmount}
-            onChange={setRawAmount}
-            maxAmount={isDeposit ? walletBalance : withdrawable}
-            maxLabel={isDeposit ? "Wallet balance" : "Withdrawable"}
-            invalid={hasBlockingError && validation !== AmountValidationCode.Empty}
-            describedBy={validationMessageId}
+      <div className="flex flex-col gap-5">
+        <AssetAmountInput
+          id={amountInputId}
+          label={isDeposit ? "Amount to deposit" : "Amount to withdraw"}
+          symbol={AssetSymbol.Usdc}
+          decimals={lendAssetDecimals}
+          unitPrice={unitPrice}
+          value={rawAmount}
+          onChange={setRawAmount}
+          maxAmount={isDeposit ? walletBalance : withdrawable}
+          maxLabel={isDeposit ? "Wallet balance" : "Withdrawable"}
+          invalid={hasBlockingError && validation !== AmountValidationCode.Empty}
+          describedBy={validationMessageId}
+        />
+
+        <AmountValidationMessage
+          id={validationMessageId}
+          code={validation}
+          messages={isDeposit ? depositMessagesFor(minimumDeposit) : withdrawMessages}
+        />
+
+        {isDeposit ? null : <WithdrawLiquidityNotice
+            withdrawable={withdrawable}
+            isLiquidityConstrained={poolAvailableLiquidity < depositedBalance}
+          />}
+
+        {canSubmit ? <TxReviewSheet title="Review" rows={reviewRows} /> : null}
+
+        {needsApproval && canSubmit ? (
+          <ApprovalStep
+            steps={[
+              {
+                label: `Approve ${AssetSymbol.Usdc}`,
+                description: "A one-time permission letting the pool move this amount on your behalf.",
+                state: StepState.Active,
+              },
+              {
+                label: "Deposit",
+                description: "The actual transfer into the pool. Interest starts accruing immediately.",
+                state: StepState.Upcoming,
+              },
+            ]}
           />
+        ) : null}
 
-          <AmountValidationMessage
-            id={validationMessageId}
-            code={validation}
-            messages={isDeposit ? depositMessagesFor(minimumDeposit) : withdrawMessages}
-          />
+        <TxStatusTracker
+          status={tx.status}
+          approvalAsset={AssetSymbol.Usdc}
+          approvalSpender="pool"
+          confirmedMessage={
+            isDeposit
+              ? "Your deposit is in the pool and has started earning interest."
+              : "Your USDC is back in your wallet."
+          }
+          errorMessage={tx.error}
+        />
 
-          {isDeposit ? null : <WithdrawLiquidityNotice
-              withdrawable={withdrawable}
-              isLiquidityConstrained={poolAvailableLiquidity < depositedBalance}
-            />}
-
-          {canSubmit ? <TxReviewSheet title="Review" rows={reviewRows} /> : null}
-
-          {needsApproval && canSubmit ? (
-            <ApprovalStep
-              steps={[
-                {
-                  label: `Approve ${AssetSymbol.Usdc}`,
-                  description: "A one-time permission letting the pool move this amount on your behalf.",
-                  state: StepState.Active,
-                },
-                {
-                  label: "Deposit",
-                  description: "The actual transfer into the pool. Interest starts accruing immediately.",
-                  state: StepState.Upcoming,
-                },
-              ]}
-            />
-          ) : null}
-
-          <TxStatusTracker
-            status={tx.status}
-            approvalAsset={AssetSymbol.Usdc}
-            approvalSpender="pool"
-            confirmedMessage={
-              isDeposit
-                ? "Your deposit is in the pool and has started earning interest."
-                : "Your USDC is back in your wallet."
-            }
-            errorMessage={tx.error}
-          />
-
-          <Button size={ButtonSize.Lg} fullWidth disabled={!canSubmit || tx.isBusy} onClick={tx.submit}>
-            {isDeposit ? "Deposit" : "Withdraw"}
-          </Button>
-        </div>
-      </WalletGate>
+        <Button size={ButtonSize.Lg} fullWidth disabled={!canSubmit || tx.isBusy} onClick={tx.submit}>
+          {isDeposit ? "Deposit" : "Withdraw"}
+        </Button>
+      </div>
     </Card>
   );
 }

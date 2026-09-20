@@ -1,10 +1,9 @@
-import { ButtonSize, ButtonVariant, FaucetStatus, IconName, SurfaceElevation, WalletGatePurpose } from "@/lib/enums";
+import { ButtonSize, ButtonVariant, FaucetStatus, IconName, SurfaceElevation } from "@/lib/enums";
 import { formatTokenAmount } from "@/lib/token";
 import { faucetAssets, practicePageContent } from "@/content/practice";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
-import { WalletGate } from "@/components/app/WalletGate";
 import { FaucetRateLimitNotice } from "@/components/practice/FaucetRateLimitNotice";
 
 export function TestnetFaucetCard() {
@@ -45,9 +44,7 @@ export function TestnetFaucetCard() {
         </p>
       </Card>
 
-      <WalletGate purpose={WalletGatePurpose.Faucet} skeletonClassName="h-24 rounded-card">
-        <FaucetRateLimitNotice />
-      </WalletGate>
+      <FaucetRateLimitNotice />
     </div>
   );
 }

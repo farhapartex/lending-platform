@@ -7,7 +7,6 @@ import {
   ButtonVariant,
   IconName,
   StepState,
-  WalletGatePurpose,
   WalletStatus,
 } from "@/lib/enums";
 import { useWalletState } from "@/hooks/useWalletState";
@@ -15,7 +14,6 @@ import { useTokenBalances } from "@/hooks/useTokenBalances";
 import { usePositionView } from "@/hooks/usePositionView";
 import { useProtocolContracts } from "@/hooks/useProtocolContracts";
 import { useTxFlow, type TxStep } from "@/hooks/useTxFlow";
-import { WalletGate } from "@/components/app/WalletGate";
 import { formatTokenAmount } from "@/lib/token";
 import { debtDecimals } from "@/content/protocol";
 import { estimatedGasUsd } from "@/content/liquidations";
@@ -118,54 +116,52 @@ export function LiquidateModal({ row, onClose }: LiquidateModalProps) {
           </Alert>
         ) : null}
 
-        <WalletGate purpose={WalletGatePurpose.Liquidate} skeletonClassName="h-32 rounded-card">
-          <div className="flex flex-col gap-5">
-            {isPriced ? null : (
-              <Alert title="The price feed has gone quiet" tone={BadgeTone.Caution} icon={IconName.Warning}>
-                The protocol will refuse to settle a position it cannot value, so this would be rejected on chain.
-                It becomes possible again once a fresh price arrives.
-              </Alert>
-            )}
+        <div className="flex flex-col gap-5">
+          {isPriced ? null : (
+            <Alert title="The price feed has gone quiet" tone={BadgeTone.Caution} icon={IconName.Warning}>
+              The protocol will refuse to settle a position it cannot value, so this would be rejected on chain.
+              It becomes possible again once a fresh price arrives.
+            </Alert>
+          )}
 
-            {canAfford ? null : (
-              <Alert title="Not enough USDC to repay this loan" tone={BadgeTone.Caution} icon={IconName.Warning}>
-                You need {formatTokenAmount(row.debtAmount, debtDecimals, 2)} {AssetSymbol.Usdc} to settle this
-                position, and your wallet holds less than that.
-              </Alert>
-            )}
+          {canAfford ? null : (
+            <Alert title="Not enough USDC to repay this loan" tone={BadgeTone.Caution} icon={IconName.Warning}>
+              You need {formatTokenAmount(row.debtAmount, debtDecimals, 2)} {AssetSymbol.Usdc} to settle this
+              position, and your wallet holds less than that.
+            </Alert>
+          )}
 
-            {needsApproval ? (
-              <ApprovalStep
-                steps={[
-                  {
-                    label: `Approve ${AssetSymbol.Usdc}`,
-                    description: "A one-time permission letting the pool collect your repayment.",
-                    state: StepState.Active,
-                  },
-                  {
-                    label: "Liquidate",
-                    description: "Repays the loan and transfers the collateral, plus your bonus, to you.",
-                    state: StepState.Upcoming,
-                  },
-                ]}
-              />
-            ) : null}
-
-            <TxReviewSheet title="Costs" rows={reviewRows} />
-
-            <EligibilityRecheckNotice />
-
-            <RaceConditionNotice />
-
-            <TxStatusTracker
-              status={tx.status}
-              approvalAsset={AssetSymbol.Usdc}
-              approvalSpender="pool"
-              confirmedMessage="The loan is repaid and the collateral, plus your bonus, is in your wallet."
-              errorMessage={tx.error}
+          {needsApproval ? (
+            <ApprovalStep
+              steps={[
+                {
+                  label: `Approve ${AssetSymbol.Usdc}`,
+                  description: "A one-time permission letting the pool collect your repayment.",
+                  state: StepState.Active,
+                },
+                {
+                  label: "Liquidate",
+                  description: "Repays the loan and transfers the collateral, plus your bonus, to you.",
+                  state: StepState.Upcoming,
+                },
+              ]}
             />
-          </div>
-        </WalletGate>
+          ) : null}
+
+          <TxReviewSheet title="Costs" rows={reviewRows} />
+
+          <EligibilityRecheckNotice />
+
+          <RaceConditionNotice />
+
+          <TxStatusTracker
+            status={tx.status}
+            approvalAsset={AssetSymbol.Usdc}
+            approvalSpender="pool"
+            confirmedMessage="The loan is repaid and the collateral, plus your bonus, is in your wallet."
+            errorMessage={tx.error}
+          />
+        </div>
       </div>
     </Modal>
   );

@@ -27,7 +27,6 @@ import { AmountValidationMessage } from "@/components/tx/AmountValidationMessage
 import { ApprovalStep } from "@/components/tx/ApprovalStep";
 import { TxReviewSheet } from "@/components/tx/TxReviewSheet";
 import { TxStatusTracker } from "@/components/tx/TxStatusTracker";
-import { WalletGate } from "@/components/app/WalletGate";
 import { BorrowLimitSlider } from "@/components/borrow/BorrowLimitSlider";
 import { HealthImpactPreview } from "@/components/borrow/HealthImpactPreview";
 import { InsufficientLiquidityNotice } from "@/components/borrow/InsufficientLiquidityNotice";
@@ -196,104 +195,102 @@ export function DebtPanel({ view }: DebtPanelProps) {
         />
       </div>
 
-      <WalletGate>
-        <div className="flex flex-col gap-5">
-          {isBorrow ? <MaxBorrowExplainer capacity={capacity} /> : null}
+      <div className="flex flex-col gap-5">
+        {isBorrow ? <MaxBorrowExplainer capacity={capacity} /> : null}
 
-          {!isBorrow ? (
-            <TabBar
-              items={repayModeItems}
-              active={repayMode}
-              label="How much to repay"
-              onChange={(value) => {
-                setRepayMode(value);
-                setRawAmount("");
-              }}
-            />
-          ) : null}
-
-          {isFullRepay ? (
-            <div className="flex flex-col gap-1.5 rounded-card border border-line bg-surface-muted p-4">
-              <span className="text-sm text-ink-soft">Repaying your full balance</span>
-              <span className="text-2xl font-semibold tracking-tight text-ink tabular-nums">
-                {formatTokenAmount(debtOutstanding, debtDecimals, 2)} {AssetSymbol.Usdc}
-              </span>
-            </div>
-          ) : (
-            <AssetAmountInput
-              id={amountInputId}
-              label={isBorrow ? "Amount to borrow" : "Amount to repay"}
-              symbol={AssetSymbol.Usdc}
-              decimals={debtDecimals}
-              unitPrice={view.debtPrice}
-              value={rawAmount}
-              onChange={setRawAmount}
-              maxAmount={isBorrow ? capacity : minBigInt(debtOutstanding, walletUsdc)}
-              maxLabel={isBorrow ? "Available to borrow" : "You owe"}
-              invalid={hasBlockingError && validation !== AmountValidationCode.Empty}
-              describedBy={validationMessageId}
-            />
-          )}
-
-          {isBorrow ? (
-            <BorrowLimitSlider valueBps={sliderBps} onChange={handleSliderChange} selectedAmount={sliderAmount} />
-          ) : null}
-
-          <AmountValidationMessage id={validationMessageId} code={validation} messages={messages} />
-
-          {isBorrow ? (
-            <SafetyBufferRecommendation recommendedCapacity={recommendedCapacity} isExceeded={isPastRecommended} />
-          ) : null}
-
-          {isBorrow && isLiquidityConstrained ? (
-            <InsufficientLiquidityNotice availableLiquidity={view.availableLiquidity} />
-          ) : null}
-
-          {canSubmit ? (
-            <HealthImpactPreview
-              currentFactorBps={currentFactor}
-              currentTier={currentTier}
-              nextFactorBps={nextFactor}
-              nextTier={nextTier}
-            />
-          ) : null}
-
-          {canSubmit ? <TxReviewSheet title="Review" rows={reviewRows} /> : null}
-
-          {needsApproval && canSubmit ? (
-            <ApprovalStep
-              steps={[
-                {
-                  label: `Approve ${AssetSymbol.Usdc}`,
-                  description: "A one-time permission letting the pool collect your repayment.",
-                  state: StepState.Active,
-                },
-                {
-                  label: "Repay",
-                  description: "The transfer that reduces your debt and lifts your safety score.",
-                  state: StepState.Upcoming,
-                },
-              ]}
-            />
-          ) : null}
-
-          <TxStatusTracker
-            status={tx.status}
-            approvalAsset={AssetSymbol.Usdc}
-            approvalSpender="pool"
-            confirmedMessage={
-              isBorrow
-                ? "The USDC is in your wallet and interest has started accruing."
-                : "Your debt has gone down and your safety score has gone up."
-            }
-            errorMessage={tx.error}
+        {!isBorrow ? (
+          <TabBar
+            items={repayModeItems}
+            active={repayMode}
+            label="How much to repay"
+            onChange={(value) => {
+              setRepayMode(value);
+              setRawAmount("");
+            }}
           />
+        ) : null}
 
-          <Button size={ButtonSize.Lg} fullWidth disabled={!canSubmit || tx.isBusy} onClick={tx.submit}>
-            {tx.isBusy ? "Working" : isBorrow ? "Borrow" : "Repay"}
-          </Button>
-        </div>
-      </WalletGate>
+        {isFullRepay ? (
+          <div className="flex flex-col gap-1.5 rounded-card border border-line bg-surface-muted p-4">
+            <span className="text-sm text-ink-soft">Repaying your full balance</span>
+            <span className="text-2xl font-semibold tracking-tight text-ink tabular-nums">
+              {formatTokenAmount(debtOutstanding, debtDecimals, 2)} {AssetSymbol.Usdc}
+            </span>
+          </div>
+        ) : (
+          <AssetAmountInput
+            id={amountInputId}
+            label={isBorrow ? "Amount to borrow" : "Amount to repay"}
+            symbol={AssetSymbol.Usdc}
+            decimals={debtDecimals}
+            unitPrice={view.debtPrice}
+            value={rawAmount}
+            onChange={setRawAmount}
+            maxAmount={isBorrow ? capacity : minBigInt(debtOutstanding, walletUsdc)}
+            maxLabel={isBorrow ? "Available to borrow" : "You owe"}
+            invalid={hasBlockingError && validation !== AmountValidationCode.Empty}
+            describedBy={validationMessageId}
+          />
+        )}
+
+        {isBorrow ? (
+          <BorrowLimitSlider valueBps={sliderBps} onChange={handleSliderChange} selectedAmount={sliderAmount} />
+        ) : null}
+
+        <AmountValidationMessage id={validationMessageId} code={validation} messages={messages} />
+
+        {isBorrow ? (
+          <SafetyBufferRecommendation recommendedCapacity={recommendedCapacity} isExceeded={isPastRecommended} />
+        ) : null}
+
+        {isBorrow && isLiquidityConstrained ? (
+          <InsufficientLiquidityNotice availableLiquidity={view.availableLiquidity} />
+        ) : null}
+
+        {canSubmit ? (
+          <HealthImpactPreview
+            currentFactorBps={currentFactor}
+            currentTier={currentTier}
+            nextFactorBps={nextFactor}
+            nextTier={nextTier}
+          />
+        ) : null}
+
+        {canSubmit ? <TxReviewSheet title="Review" rows={reviewRows} /> : null}
+
+        {needsApproval && canSubmit ? (
+          <ApprovalStep
+            steps={[
+              {
+                label: `Approve ${AssetSymbol.Usdc}`,
+                description: "A one-time permission letting the pool collect your repayment.",
+                state: StepState.Active,
+              },
+              {
+                label: "Repay",
+                description: "The transfer that reduces your debt and lifts your safety score.",
+                state: StepState.Upcoming,
+              },
+            ]}
+          />
+        ) : null}
+
+        <TxStatusTracker
+          status={tx.status}
+          approvalAsset={AssetSymbol.Usdc}
+          approvalSpender="pool"
+          confirmedMessage={
+            isBorrow
+              ? "The USDC is in your wallet and interest has started accruing."
+              : "Your debt has gone down and your safety score has gone up."
+          }
+          errorMessage={tx.error}
+        />
+
+        <Button size={ButtonSize.Lg} fullWidth disabled={!canSubmit || tx.isBusy} onClick={tx.submit}>
+          {tx.isBusy ? "Working" : isBorrow ? "Borrow" : "Repay"}
+        </Button>
+      </div>
     </Card>
   );
 }

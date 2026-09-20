@@ -9,7 +9,6 @@ import {
   SectionTone,
   SurfaceElevation,
   ValueFormat,
-  WalletGatePurpose,
 } from "@/lib/enums";
 import { formatValue } from "@/lib/format";
 import { formatHealthFactor, scaledValueToUsd, toValueScaled } from "@/lib/health";
@@ -30,7 +29,6 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Section } from "@/components/ui/Section";
-import { WalletGate } from "@/components/app/WalletGate";
 import { HealthBadge } from "@/components/borrow/HealthBadge";
 import { FusdPreviewNotice } from "@/components/fusd/FusdPreviewNotice";
 
@@ -101,70 +99,68 @@ export default function FusdLiquidationsPage() {
               icon={IconName.ShieldCheck}
             />
           ) : (
-            <WalletGate purpose={WalletGatePurpose.Liquidate}>
-              <Card elevation={SurfaceElevation.Raised} className="overflow-hidden p-0">
-                <table className="w-full border-collapse text-left">
-                  <thead className="border-b border-line bg-surface-muted">
-                    <tr>
-                      <th scope="col" className="px-5 py-3 text-xs font-medium uppercase tracking-[0.08em] text-ink-faint">
-                        Borrower
-                      </th>
-                      <th scope="col" className="px-5 py-3 text-xs font-medium uppercase tracking-[0.08em] text-ink-faint">
-                        Collateral
-                      </th>
-                      <th scope="col" className="px-5 py-3 text-xs font-medium uppercase tracking-[0.08em] text-ink-faint">
-                        FUSD owed
-                      </th>
-                      <th scope="col" className="px-5 py-3 text-xs font-medium uppercase tracking-[0.08em] text-ink-faint">
-                        Health
-                      </th>
-                      <th scope="col" className="px-5 py-3 text-xs font-medium uppercase tracking-[0.08em] text-ink-faint">
-                        Your bonus
-                      </th>
-                      <th scope="col" className="px-5 py-3" />
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-line">
-                    {rows.map((row) => (
-                      <tr key={row.id}>
-                        <td className="px-5 py-4">
-                          <AddressDisplay address={row.borrower} />
-                        </td>
-                        <td className="px-5 py-4">
-                          <div className="flex flex-col gap-0.5">
-                            {row.collateral.map((entry) => (
-                              <span key={entry.symbol} className="text-sm text-ink tabular-nums">
-                                {formatTokenAmount(entry.amount, entry.decimals, 4)} {entry.symbol}
-                              </span>
-                            ))}
-                            <span className="text-xs text-ink-faint tabular-nums">
-                              {formatValue(scaledValueToUsd(row.collateralValue), ValueFormat.UsdPrice)}
+            <Card elevation={SurfaceElevation.Raised} className="overflow-hidden p-0">
+              <table className="w-full border-collapse text-left">
+                <thead className="border-b border-line bg-surface-muted">
+                  <tr>
+                    <th scope="col" className="px-5 py-3 text-xs font-medium uppercase tracking-[0.08em] text-ink-faint">
+                      Borrower
+                    </th>
+                    <th scope="col" className="px-5 py-3 text-xs font-medium uppercase tracking-[0.08em] text-ink-faint">
+                      Collateral
+                    </th>
+                    <th scope="col" className="px-5 py-3 text-xs font-medium uppercase tracking-[0.08em] text-ink-faint">
+                      FUSD owed
+                    </th>
+                    <th scope="col" className="px-5 py-3 text-xs font-medium uppercase tracking-[0.08em] text-ink-faint">
+                      Health
+                    </th>
+                    <th scope="col" className="px-5 py-3 text-xs font-medium uppercase tracking-[0.08em] text-ink-faint">
+                      Your bonus
+                    </th>
+                    <th scope="col" className="px-5 py-3" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line">
+                  {rows.map((row) => (
+                    <tr key={row.id}>
+                      <td className="px-5 py-4">
+                        <AddressDisplay address={row.borrower} />
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex flex-col gap-0.5">
+                          {row.collateral.map((entry) => (
+                            <span key={entry.symbol} className="text-sm text-ink tabular-nums">
+                              {formatTokenAmount(entry.amount, entry.decimals, 4)} {entry.symbol}
                             </span>
-                          </div>
-                        </td>
-                        <td className="px-5 py-4 text-sm font-semibold text-ink tabular-nums">
-                          {formatTokenAmount(row.minted, fusdDecimals, 2)} {AssetSymbol.Fusd}
-                        </td>
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-2">
-                            <HealthBadge tier={row.tier} />
-                            <span className="text-sm text-ink-soft tabular-nums">{formatHealthFactor(row.factorBps, 4)}</span>
-                          </div>
-                        </td>
-                        <td className="px-5 py-4 text-sm font-semibold text-mint-ink tabular-nums">
-                          {formatValue(scaledValueToUsd(row.bonusValue), ValueFormat.UsdPrice)}
-                        </td>
-                        <td className="px-5 py-4 text-right">
-                          <Button size={ButtonSize.Sm} variant={ButtonVariant.Secondary} disabled>
-                            Settle
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </Card>
-            </WalletGate>
+                          ))}
+                          <span className="text-xs text-ink-faint tabular-nums">
+                            {formatValue(scaledValueToUsd(row.collateralValue), ValueFormat.UsdPrice)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-sm font-semibold text-ink tabular-nums">
+                        {formatTokenAmount(row.minted, fusdDecimals, 2)} {AssetSymbol.Fusd}
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2">
+                          <HealthBadge tier={row.tier} />
+                          <span className="text-sm text-ink-soft tabular-nums">{formatHealthFactor(row.factorBps, 4)}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-sm font-semibold text-mint-ink tabular-nums">
+                        {formatValue(scaledValueToUsd(row.bonusValue), ValueFormat.UsdPrice)}
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <Button size={ButtonSize.Sm} variant={ButtonVariant.Secondary} disabled>
+                          Settle
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
           )}
 
           <Card elevation={SurfaceElevation.Flat} className="flex flex-col gap-2 p-6 sm:p-7">

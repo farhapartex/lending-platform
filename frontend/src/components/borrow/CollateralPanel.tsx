@@ -17,7 +17,6 @@ import { AmountValidationMessage } from "@/components/tx/AmountValidationMessage
 import { ApprovalStep } from "@/components/tx/ApprovalStep";
 import { TxReviewSheet } from "@/components/tx/TxReviewSheet";
 import { TxStatusTracker } from "@/components/tx/TxStatusTracker";
-import { WalletGate } from "@/components/app/WalletGate";
 import { CollateralWithdrawGuard } from "@/components/borrow/CollateralWithdrawGuard";
 import { HealthImpactPreview } from "@/components/borrow/HealthImpactPreview";
 
@@ -135,73 +134,71 @@ export function CollateralPanel({ view }: CollateralPanelProps) {
         }} />
       </div>
 
-      <WalletGate>
-        <div className="flex flex-col gap-5">
-          <AssetAmountInput
-            id={amountInputId}
-            label={isDeposit ? "Amount to add" : "Amount to withdraw"}
-            symbol={AssetSymbol.Weth}
-            decimals={collateralDecimals}
-            unitPrice={view.collateralPrice}
-            value={rawAmount}
-            onChange={setRawAmount}
-            maxAmount={isDeposit ? view.walletWeth : safeWithdrawal}
-            maxLabel={isDeposit ? "Wallet balance" : "Safe to withdraw"}
-            invalid={hasBlockingError && validation !== AmountValidationCode.Empty}
-            describedBy={validationMessageId}
+      <div className="flex flex-col gap-5">
+        <AssetAmountInput
+          id={amountInputId}
+          label={isDeposit ? "Amount to add" : "Amount to withdraw"}
+          symbol={AssetSymbol.Weth}
+          decimals={collateralDecimals}
+          unitPrice={view.collateralPrice}
+          value={rawAmount}
+          onChange={setRawAmount}
+          maxAmount={isDeposit ? view.walletWeth : safeWithdrawal}
+          maxLabel={isDeposit ? "Wallet balance" : "Safe to withdraw"}
+          invalid={hasBlockingError && validation !== AmountValidationCode.Empty}
+          describedBy={validationMessageId}
+        />
+
+        <AmountValidationMessage id={validationMessageId} code={validation} messages={messages} />
+
+        {isDeposit ? null : (
+          <CollateralWithdrawGuard maxSafeWithdrawal={safeWithdrawal} hasDebt={view.debtOutstanding > 0n} />
+        )}
+
+        {canSubmit ? (
+          <HealthImpactPreview
+            currentFactorBps={view.factorBps}
+            currentTier={view.tier}
+            nextFactorBps={nextFactor}
+            nextTier={nextTier}
           />
+        ) : null}
 
-          <AmountValidationMessage id={validationMessageId} code={validation} messages={messages} />
+        {canSubmit ? <TxReviewSheet title="Review" rows={reviewRows} /> : null}
 
-          {isDeposit ? null : (
-            <CollateralWithdrawGuard maxSafeWithdrawal={safeWithdrawal} hasDebt={view.debtOutstanding > 0n} />
-          )}
-
-          {canSubmit ? (
-            <HealthImpactPreview
-              currentFactorBps={view.factorBps}
-              currentTier={view.tier}
-              nextFactorBps={nextFactor}
-              nextTier={nextTier}
-            />
-          ) : null}
-
-          {canSubmit ? <TxReviewSheet title="Review" rows={reviewRows} /> : null}
-
-          {needsApproval && canSubmit ? (
-            <ApprovalStep
-              steps={[
-                {
-                  label: `Approve ${AssetSymbol.Weth}`,
-                  description: "A one-time permission letting the vault move this amount on your behalf.",
-                  state: StepState.Active,
-                },
-                {
-                  label: "Add collateral",
-                  description: "The transfer into the collateral vault. Your borrowing power rises immediately.",
-                  state: StepState.Upcoming,
-                },
-              ]}
-            />
-          ) : null}
-
-          <TxStatusTracker
-            status={tx.status}
-            approvalAsset={AssetSymbol.Weth}
-            approvalSpender="collateral vault"
-            confirmedMessage={
-              isDeposit
-                ? "Your collateral is in the vault and your borrowing power has gone up."
-                : "Your collateral is back in your wallet."
-            }
-            errorMessage={tx.error}
+        {needsApproval && canSubmit ? (
+          <ApprovalStep
+            steps={[
+              {
+                label: `Approve ${AssetSymbol.Weth}`,
+                description: "A one-time permission letting the vault move this amount on your behalf.",
+                state: StepState.Active,
+              },
+              {
+                label: "Add collateral",
+                description: "The transfer into the collateral vault. Your borrowing power rises immediately.",
+                state: StepState.Upcoming,
+              },
+            ]}
           />
+        ) : null}
 
-          <Button size={ButtonSize.Lg} fullWidth disabled={!canSubmit || tx.isBusy} onClick={tx.submit}>
-            {tx.isBusy ? "Working" : isDeposit ? "Add collateral" : "Withdraw collateral"}
-          </Button>
-        </div>
-      </WalletGate>
+        <TxStatusTracker
+          status={tx.status}
+          approvalAsset={AssetSymbol.Weth}
+          approvalSpender="collateral vault"
+          confirmedMessage={
+            isDeposit
+              ? "Your collateral is in the vault and your borrowing power has gone up."
+              : "Your collateral is back in your wallet."
+          }
+          errorMessage={tx.error}
+        />
+
+        <Button size={ButtonSize.Lg} fullWidth disabled={!canSubmit || tx.isBusy} onClick={tx.submit}>
+          {tx.isBusy ? "Working" : isDeposit ? "Add collateral" : "Withdraw collateral"}
+        </Button>
+      </div>
     </Card>
   );
 }
