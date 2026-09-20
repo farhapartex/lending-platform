@@ -1,18 +1,4 @@
-import { HowItWorksStepKey, IconName, TrustSignalKey, TrustSignalStatus, ValuePropKey } from "@/lib/enums";
-
-export type ValueProp = {
-  key: ValuePropKey;
-  icon: IconName;
-  title: string;
-  description: string;
-};
-
-export type HowItWorksStep = {
-  key: HowItWorksStepKey;
-  icon: IconName;
-  title: string;
-  description: string;
-};
+import { AppRoute, IconName, ProductKey, TrustSignalKey, TrustSignalStatus } from "@/lib/enums";
 
 export type TrustSignal = {
   key: TrustSignalKey;
@@ -22,70 +8,100 @@ export type TrustSignal = {
   status: TrustSignalStatus;
 };
 
+export type ProductSummary = {
+  key: ProductKey;
+  eyebrow: string;
+  title: string;
+  description: string;
+  points: string[];
+  href: AppRoute;
+  cta: string;
+  isLive: boolean;
+};
+
+export type Mechanic = {
+  key: string;
+  icon: IconName;
+  title: string;
+  description: string;
+};
+
 export const heroContent = {
-  eyebrow: "WETH / USDC market · FUSD in development",
-  title: "Put your crypto to work, or borrow against it without selling.",
+  eyebrow: "Non-custodial · WETH collateral",
+  title: "Two ways to get dollars without selling your crypto.",
   description:
-    "Lend stablecoins and earn interest that accrues every second. Or unlock liquidity from assets you already hold, with a safety score that tells you exactly where you stand at all times. A second way to borrow, minting our own dollar, is being built.",
-  primaryCta: "Start lending",
-  secondaryCta: "Borrow against collateral",
-  custodyNote: "Non-custodial. No account and no password — connect a wallet and you are ready.",
+    "Lock what you already hold and either borrow USDC that other people have deposited, or mint FUSD, a dollar the protocol issues against your collateral. Both keep your assets in your name and both publish every rule before you commit anything.",
+  note: "No account, no password, no approval. Connect a wallet and the rules are the same for everyone.",
 } as const;
 
-export const valueProps: ValueProp[] = [
+export const products: ProductSummary[] = [
   {
-    key: ValuePropKey.Earn,
-    icon: IconName.Coins,
-    title: "Earn on idle stablecoins",
+    key: ProductKey.Lending,
+    eyebrow: "Live now",
+    title: "Lend and borrow",
     description:
-      "Deposit USDC and start earning immediately. Interest compounds automatically into your balance, with no claiming step and no lock-up.",
+      "A shared pool of USDC. Deposit to earn interest paid by borrowers, or lock WETH and borrow against it at a rate the market sets.",
+    points: [
+      "Earn on idle stablecoins with no lock-up",
+      "Borrow up to 75% of what your collateral is worth",
+      "Interest accrues every second and compounds on its own",
+    ],
+    href: AppRoute.Lending,
+    cta: "How lending works",
+    isLive: true,
   },
   {
-    key: ValuePropKey.Unlock,
-    icon: IconName.Wallet,
-    title: "Borrow without selling",
+    key: ProductKey.Fusd,
+    eyebrow: "In development",
+    title: "Mint FUSD",
     description:
-      "Use the assets you already hold as collateral to unlock liquidity. Keep your upside, skip the paperwork, and repay whenever you choose.",
-  },
-  {
-    key: ValuePropKey.Mint,
-    icon: IconName.Coins,
-    title: "Or mint dollars yourself",
-    description:
-      "FUSD is a dollar the protocol creates against your collateral rather than borrowing it from a pool. No pool to run dry, and no interest to pay. Still being built.",
-  },
-  {
-    key: ValuePropKey.Visibility,
-    icon: IconName.Gauge,
-    title: "Risk you can actually read",
-    description:
-      "A plain-language safety score updates live with prices. See how a price drop would affect you before it happens, not after.",
+      "A dollar created against your collateral rather than borrowed from anybody. No pool to run dry, and version one charges no interest at all.",
+    points: [
+      "Mint up to two thirds of your collateral value",
+      "Backed by more than a dollar of crypto, always",
+      "Plain ERC20 with no freeze switch and no transfer hooks",
+    ],
+    href: AppRoute.Fusd,
+    cta: "How FUSD works",
+    isLive: false,
   },
 ];
 
-export const howItWorksSteps: HowItWorksStep[] = [
+export const mechanicsContent = {
+  eyebrow: "Shared mechanics",
+  title: "Different products, the same three rules.",
+  description:
+    "Whichever side you use, the protocol protects lenders the same way, and it is worth understanding before you lock anything up.",
+} as const;
+
+export const mechanics: Mechanic[] = [
   {
-    key: HowItWorksStepKey.Connect,
-    icon: IconName.Wallet,
-    title: "Connect a wallet",
+    key: "overcollateralised",
+    icon: IconName.Lock,
+    title: "You always lock more than you take",
     description:
-      "No signup form and no password to forget. Your wallet is your account, and your funds never leave your control.",
+      "That surplus is what replaces a credit check. It is also what absorbs a fall in price before anybody else is exposed to it.",
   },
   {
-    key: HowItWorksStepKey.Choose,
-    icon: IconName.Coins,
-    title: "Lend or borrow",
-    description:
-      "Deposit USDC to earn interest, or deposit WETH as collateral and borrow against it up to a safe limit we show you upfront.",
-  },
-  {
-    key: HowItWorksStepKey.Monitor,
+    key: "health",
     icon: IconName.Gauge,
-    title: "Stay ahead of risk",
+    title: "One number tells you where you stand",
     description:
-      "Watch your safety score live, get warned well before liquidation is possible, and add collateral or repay in a single step.",
+      "A health factor, updated live with the price. Above the line you are fine, and the interface warns you long before you approach it.",
+  },
+  {
+    key: "liquidation",
+    icon: IconName.ShieldCheck,
+    title: "Anyone can close an unsafe position",
+    description:
+      "If a position falls through the line, a stranger repays the debt and takes the collateral plus a published bonus. Harsh, and it is what keeps every deposit backed.",
   },
 ];
+
+export const trustContent = {
+  eyebrow: "Where you stand",
+  title: "What we can and cannot do with your money.",
+} as const;
 
 export const trustSignals: TrustSignal[] = [
   {
@@ -99,49 +115,28 @@ export const trustSignals: TrustSignal[] = [
     key: TrustSignalKey.PublishedParameters,
     icon: IconName.Sliders,
     title: "Published risk parameters",
-    description: "Every limit, threshold, and bonus percentage is documented before you commit any funds.",
+    description: "Every limit, threshold and bonus is documented before you commit any funds.",
     status: TrustSignalStatus.Live,
   },
   {
     key: TrustSignalKey.OpenSource,
     icon: IconName.Code,
     title: "Open source contracts",
-    description: "The lending, collateral, and liquidation logic is readable and verifiable by anyone.",
+    description: "The lending, collateral and liquidation logic is readable and verifiable by anyone.",
     status: TrustSignalStatus.Live,
   },
   {
     key: TrustSignalKey.Audit,
     icon: IconName.ShieldCheck,
     title: "Independent audit",
-    description: "Scheduled ahead of mainnet launch. The full report will be published here when complete.",
+    description: "Not done. Nobody has reviewed these contracts, which is the single biggest reason not to use real money yet.",
     status: TrustSignalStatus.Planned,
   },
 ];
 
-export const practiceContent = {
-  eyebrow: "No risk",
-  title: "Try the whole thing with test funds first",
+export const closingContent = {
+  title: "Ready to look around?",
   description:
-    "Practice mode runs the real interface on a test network with fake money. Lend, borrow, push a position to liquidation, and see what happens before a single real asset is involved.",
-  cta: "Open practice mode",
-} as const;
-
-export type BorrowRoute = {
-  key: string;
-  name: string;
-  status: string;
-  isLive: boolean;
-  summary: string;
-  costLabel: string;
-  terms: { label: string; value: string }[];
-  suitsYou: string;
-};
-
-export const borrowOrMintContent = {
-  eyebrow: "Two ways to borrow",
-  title: "Borrow someone else's dollars, or mint your own.",
-  description:
-    "Both lock the same collateral and both liquidate you if it falls too far. What differs is where the dollars come from, what they cost, and how much you can take.",
-  footnote:
-    "The market terms are read from the deployed contracts. The FUSD terms are the published design and are not live yet.",
+    "Connecting a wallet takes one click and creates nothing. You can read every market figure before you decide to move anything.",
+  cta: "Connect a wallet",
 } as const;

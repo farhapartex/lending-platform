@@ -37,12 +37,9 @@ export function MarketingNav() {
           )}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
-          <Button href={AppRoute.Login} size={ButtonSize.Sm} variant={ButtonVariant.Secondary}>
+        <div className="hidden md:block">
+          <Button href={AppRoute.Login} size={ButtonSize.Sm} trailingIcon={IconName.ArrowRight}>
             Log in
-          </Button>
-          <Button href={AppRoute.Dashboard} size={ButtonSize.Sm} trailingIcon={IconName.ArrowRight}>
-            Launch app
           </Button>
         </div>
 
@@ -75,9 +72,7 @@ export function MarketingNav() {
           <Button href={AppRoute.Login} fullWidth variant={ButtonVariant.Secondary} className="mt-3">
             Log in
           </Button>
-          <Button href={AppRoute.Dashboard} fullWidth trailingIcon={IconName.ArrowRight} className="mt-2">
-            Launch app
-          </Button>
+
         </Container>
       </div>
     </header>

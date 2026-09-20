@@ -99,3 +99,11 @@ export const practicePageContent = {
     "Nothing carries across from practice mode, so you start fresh. Take your time, and consider borrowing well under your limit for your first loan.",
   returnCta: "Switch to the live app",
 } as const;
+
+export const practiceModeCardContent = {
+  eyebrow: "No risk",
+  title: "Try the whole thing with test funds first",
+  description:
+    "Practice mode runs the real interface on a test network with fake money. Lend, borrow, push a position to liquidation, and see what happens before a single real asset is involved.",
+  cta: "Open practice mode",
+} as const;

@@ -239,11 +239,11 @@ export default function FusdPage() {
         </div>
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-          <Button href={AppRoute.Markets} size={ButtonSize.Lg} trailingIcon={IconName.ArrowRight}>
+          <Button href={AppRoute.Lending} size={ButtonSize.Lg} trailingIcon={IconName.ArrowRight}>
             See what is live today
           </Button>
-          <Button href={AppRoute.LearnStablecoin} size={ButtonSize.Lg} variant={ButtonVariant.Secondary}>
-            Read the documentation
+          <Button href={AppRoute.Login} size={ButtonSize.Lg} variant={ButtonVariant.Secondary}>
+            Connect a wallet
           </Button>
         </div>
       </Section>

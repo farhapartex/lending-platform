@@ -4,26 +4,9 @@ export const siteName = "Fusion";
 
 export const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:5173";
 
-export const indexableRoutes: AppRoute[] = [
-  AppRoute.Home,
-  AppRoute.Fusd,
-  AppRoute.Markets,
-  AppRoute.Lend,
-  AppRoute.Borrow,
-  AppRoute.Liquidations,
-  AppRoute.Practice,
-  AppRoute.Welcome,
-  AppRoute.Learn,
-  AppRoute.LearnHowItWorks,
-  AppRoute.LearnStablecoin,
-  AppRoute.LearnHealthScore,
-  AppRoute.LearnLiquidation,
-  AppRoute.LearnFees,
-  AppRoute.LearnFaq,
-  AppRoute.LearnGlossary,
-];
+export const indexableRoutes: AppRoute[] = [AppRoute.Home, AppRoute.Lending, AppRoute.Fusd];
 
-export const nonIndexableRoutes: AppRoute[] = [AppRoute.Dashboard, AppRoute.History];
+export const nonIndexableRoutes: AppRoute[] = [AppRoute.Login];
 
 export function absoluteUrl(route: AppRoute): string {
   return new URL(route, siteUrl).toString();
