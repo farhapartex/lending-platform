@@ -16,6 +16,17 @@
   --color-ink-soft: #545c72;
   --color-ink-faint: #848ca1;
 
+  --color-shell: #faf8f4;
+  --color-shell-muted: #f4f0e9;
+  --color-shell-line: #eae4d9;
+
+  --color-accent-soft: #fdf6e9;
+  --color-accent-muted: #f9ecd3;
+  --color-accent-border: #f0dcb0;
+  --color-accent: #cc8b1f;
+  --color-accent-hover: #b57917;
+  --color-accent-ink: #7e5310;
+
   --color-brand-soft: #eef0fe;
   --color-brand-muted: #e0e3fc;
   --color-brand-border: #c5c9f8;

@@ -8,6 +8,7 @@ export enum AppRoute {
   History = "/history",
   Practice = "/practice",
   Welcome = "/welcome",
+  Login = "/login",
   Fusd = "/fusd",
   FusdVault = "/fusd/vault",
   FusdLiquidations = "/fusd/liquidations",
@@ -397,6 +398,8 @@ export enum IconName {
   Loader = "loader",
   ChevronDown = "chevronDown",
   Sparkles = "sparkles",
+  Copy = "copy",
+  LogOut = "logOut",
 }
 
 export enum ApiErrorCode {

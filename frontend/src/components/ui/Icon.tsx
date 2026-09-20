@@ -3,6 +3,19 @@ import { IconName } from "@/lib/enums";
 import { cn } from "@/lib/cn";
 
 const glyphs: Record<IconName, ReactNode> = {
+  [IconName.Copy]: (
+    <>
+      <rect x="9" y="9" width="11" height="11" rx="2.5" />
+      <path d="M5 15.5A2.5 2.5 0 0 1 4 13.5v-7A2.5 2.5 0 0 1 6.5 4h7a2.5 2.5 0 0 1 2 1" />
+    </>
+  ),
+  [IconName.LogOut]: (
+    <>
+      <path d="M15 5h3.5A1.5 1.5 0 0 1 20 6.5v11a1.5 1.5 0 0 1-1.5 1.5H15" />
+      <path d="M10 8l-4 4 4 4" />
+      <path d="M6 12h9" />
+    </>
+  ),
   [IconName.ArrowRight]: (
     <>
       <path d="M5 12h14" />
